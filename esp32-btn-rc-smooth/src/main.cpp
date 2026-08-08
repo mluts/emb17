@@ -52,7 +52,7 @@ struct myBtn_t {
 
 myBtn_t btn1, btn2;
 
-void myBtn_process(myBtn_t* b) {
+void myBtn_process(myBtn_t *b) {
   bool v = digitalRead(b->pin) == LOW ? true : false;
 
   if (b->pressed != v) {
@@ -62,68 +62,68 @@ void myBtn_process(myBtn_t* b) {
   }
 }
 
-int clamp(int a, int v, int b) {
-  return v < a ? a : (v > b ? b : v);
-}
+int clamp(int a, int v, int b) { return v < a ? a : (v > b ? b : v); }
 
 void setLeds(bool led1, bool led2) {
   digitalWrite(GPIO_LED1, led1 ? HIGH : LOW);
   digitalWrite(GPIO_LED2, led2 ? HIGH : LOW);
 }
 
-void handleLedsMode(){
+void handleLedsMode() {
   unsigned long ms = millis();
 
   switch (ledsConfig.mode) {
-    case LEDS_OFF:
-      // Serial.println("LEDS OFF");
-      setLeds(false, false);
-      break;
+  case LEDS_OFF:
+    // Serial.println("LEDS OFF");
+    setLeds(false, false);
+    break;
 
-    case LEDS_ON:
-      // Serial.println("LEDS ON");
-      setLeds(true, true);
-      break;
+  case LEDS_ON:
+    // Serial.println("LEDS ON");
+    setLeds(true, true);
+    break;
 
-    case LED1_ON_ONLY:
-      // Serial.println("LEDS LED 1 ONLY");
-      setLeds(true, false);
-      break;
+  case LED1_ON_ONLY:
+    // Serial.println("LEDS LED 1 ONLY");
+    setLeds(true, false);
+    break;
 
-    case LED2_ON_ONLY:
-      // Serial.println("LEDS LED 2 ONLY");
-      setLeds(false, true);
-      break;
+  case LED2_ON_ONLY:
+    // Serial.println("LEDS LED 2 ONLY");
+    setLeds(false, true);
+    break;
 
-    case LEDS_CHANGE_TOGETHER:
-      Serial.println("LEDS CHANGE TOGETHER");
-      if ((ms - ledsConfig.lastChangeAt) > LEDS_MAX_TIME / (5 * clamp(1, ledsConfig.speed, 10))) {
+  case LEDS_CHANGE_TOGETHER:
+    Serial.println("LEDS CHANGE TOGETHER");
+    if ((ms - ledsConfig.lastChangeAt) >
+        LEDS_MAX_TIME / (5 * clamp(1, ledsConfig.speed, 10))) {
 
-        if (ledsConfig.lastChangeState % 2 == 0) {
-          setLeds(true, true);
-        } else {
-          setLeds(false, false);
-        }
-
-        ledsConfig.lastChangeState++;
-        ledsConfig.lastChangeAt = ms;
+      if (ledsConfig.lastChangeState % 2 == 0) {
+        setLeds(true, true);
+      } else {
+        setLeds(false, false);
       }
-      break;
 
-    case LEDS_CHANGE:
-      // Serial.println("LEDS CHANGE");
-      if ((ms - ledsConfig.lastChangeAt) > LEDS_MAX_TIME / (2 * clamp(1, ledsConfig.speed, 10))) {
+      ledsConfig.lastChangeState++;
+      ledsConfig.lastChangeAt = ms;
+    }
+    break;
 
-        if (ledsConfig.lastChangeState % 2 == 0) {
-          setLeds(true, false);
-        } else {
-          setLeds(false, true);
-        }
+  case LEDS_CHANGE:
+    // Serial.println("LEDS CHANGE");
+    if ((ms - ledsConfig.lastChangeAt) >
+        LEDS_MAX_TIME / (2 * clamp(1, ledsConfig.speed, 10))) {
 
-        ledsConfig.lastChangeState++;
-        ledsConfig.lastChangeAt = ms;
+      if (ledsConfig.lastChangeState % 2 == 0) {
+        setLeds(true, false);
+      } else {
+        setLeds(false, true);
       }
-      break;
+
+      ledsConfig.lastChangeState++;
+      ledsConfig.lastChangeAt = ms;
+    }
+    break;
   }
 }
 
@@ -134,25 +134,25 @@ void led1Lead() {
     return;
   }
 
-  switch(ledsConfig.mode) {
-    case LEDS_CHANGE_TOGETHER:
-    case LED2_ON_ONLY:
-    case LEDS_OFF:
-      ledsConfig.mode = LED1_ON_ONLY;
-      break;
+  switch (ledsConfig.mode) {
+  case LEDS_CHANGE_TOGETHER:
+  case LED2_ON_ONLY:
+  case LEDS_OFF:
+    ledsConfig.mode = LED1_ON_ONLY;
+    break;
 
-    case LED1_ON_ONLY:
-      ledsConfig.mode = LEDS_ON;
-      break;
+  case LED1_ON_ONLY:
+    ledsConfig.mode = LEDS_ON;
+    break;
 
-    case LEDS_CHANGE:
-      ledsConfig.speed++;
-      break;
+  case LEDS_CHANGE:
+    ledsConfig.speed++;
+    break;
 
-    case LEDS_ON:
-      ledsConfig.speed = 0;
-      ledsConfig.mode = LEDS_CHANGE;
-      break;
+  case LEDS_ON:
+    ledsConfig.speed = 0;
+    ledsConfig.mode = LEDS_CHANGE;
+    break;
   }
 }
 
@@ -163,25 +163,25 @@ void led2Lead() {
     return;
   }
 
-  switch(ledsConfig.mode) {
-    case LEDS_CHANGE_TOGETHER:
-    case LED1_ON_ONLY:
-    case LEDS_OFF:
-      ledsConfig.mode = LED2_ON_ONLY;
-      break;
+  switch (ledsConfig.mode) {
+  case LEDS_CHANGE_TOGETHER:
+  case LED1_ON_ONLY:
+  case LEDS_OFF:
+    ledsConfig.mode = LED2_ON_ONLY;
+    break;
 
-    case LED2_ON_ONLY:
-      ledsConfig.mode = LEDS_ON;
-      break;
+  case LED2_ON_ONLY:
+    ledsConfig.mode = LEDS_ON;
+    break;
 
-    case LEDS_CHANGE:
-      ledsConfig.speed++;
-      break;
+  case LEDS_CHANGE:
+    ledsConfig.speed++;
+    break;
 
-    case LEDS_ON:
-      ledsConfig.speed = 0;
-      ledsConfig.mode = LEDS_CHANGE;
-      break;
+  case LEDS_ON:
+    ledsConfig.speed = 0;
+    ledsConfig.mode = LEDS_CHANGE;
+    break;
   }
 }
 
@@ -196,20 +196,20 @@ void ledsChangeTogether() {
 
 void handleEvent(Event_t e) {
   switch (e) {
-    case BTN1_RELEASED:
-      Serial.println("btn1 released");
-      led1Lead();
-      break;
+  case BTN1_RELEASED:
+    Serial.println("btn1 released");
+    led1Lead();
+    break;
 
-    case BTN2_RELEASED:
-      Serial.println("btn2 released");
-      led2Lead();
-      break;
+  case BTN2_RELEASED:
+    Serial.println("btn2 released");
+    led2Lead();
+    break;
 
-    case BTN12_PRESSED:
-      Serial.println("btn12 pressed");
-      ledsChangeTogether();
-      break;
+  case BTN12_PRESSED:
+    Serial.println("btn12 pressed");
+    ledsChangeTogether();
+    break;
   }
 }
 
@@ -217,20 +217,21 @@ void processBtns() {
   myBtn_process(&btn1);
   myBtn_process(&btn2);
 
-  if (btn1.pressed && btn2.pressed && !btn1.eventHandled && !btn2.eventHandled) {
+  if (btn1.pressed && btn2.pressed && !btn1.eventHandled &&
+      !btn2.eventHandled) {
     btn1.eventHandled = true;
     btn2.eventHandled = true;
     btn1.skipNext = true;
     btn2.skipNext = true;
     handleEvent(BTN12_PRESSED);
   } else if (!btn1.pressed && !btn1.eventHandled) {
-    if (!btn1.skipNext)  {
+    if (!btn1.skipNext) {
       handleEvent(BTN1_RELEASED);
     }
     btn1.skipNext = false;
     btn1.eventHandled = true;
   } else if (!btn2.pressed && !btn2.eventHandled) {
-    if (!btn2.skipNext){
+    if (!btn2.skipNext) {
       handleEvent(BTN2_RELEASED);
     }
     btn2.skipNext = false;
