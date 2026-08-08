@@ -50,25 +50,7 @@ struct myBtn_t {
   int pin;
 };
 
-struct myTimer_t {
-  TimeMs start = 0;
-  TimeMs duration = 0;
-};
-
-struct {
-  myTimer_t ledsTimer;
-} timers;
-
 myBtn_t btn1, btn2;
-
-void myTimer_set(myTimer_t* t, TimeMs duration) {
-  t->start = millis();
-  t->duration = duration;
-}
-
-bool myTimer_isReady(myTimer_t* t) {
-  return (millis() - t->start) >= t->duration;
-}
 
 void myBtn_process(myBtn_t* b) {
   bool v = digitalRead(b->pin) == LOW ? true : false;
@@ -266,9 +248,6 @@ void setup() {
 
   btn1.pin = GPIO_BTN1;
   btn2.pin = GPIO_BTN2;
-
-  // attachInterrupt(digitalPinToInterrupt(GPIO_BTN1), btn1Change, RISING);
-  // attachInterrupt(digitalPinToInterrupt(GPIO_BTN2), btn2Change, RISING);
 }
 
 void loop() {
