@@ -39,9 +39,10 @@ void loop() {
       left_btn_pressed) {
     left_btn_presses++;
     Serial.printf("Left btn count: %d (times);"
-                  "Bounces: %d (times);"
-                  "Period %lu (ms)\n",
-                  left_btn_presses, counter_left - left_count, ms - last_update_at);
+                  " Bounces: %d (times);"
+                  " Total Bounces %d (times);"
+                  " Period %lu (ms)\n",
+                  left_btn_presses, counter_left - left_count, counter_left, ms - last_update_at);
     last_update_at = ms;
     left_count = counter_left;
   }
