@@ -5,14 +5,43 @@
 #define ADC_MAX 4095
 #define V_REF 3300
 
+#define ADC_RESOLUTION 12
+#define ADC_ATTENUATION ADC_6db
+
+String attenuation_name(adc_attenuation_t atten) {
+  switch (atten) {
+  case ADC_ATTENDB_MAX:
+    return "MAX";
+
+  case ADC_11db:
+    return "11db";
+
+  case ADC_6db:
+    return "6db";
+
+  case ADC_2_5db:
+    return "2.5db";
+
+  case ADC_0db:
+    return "0db";
+  }
+
+  return "";
+}
+
 void setup() {
   Serial.begin(115200);
   analogReadResolution(12);
   delay(1000);
 
   pinMode(ADC_IN, INPUT);
+  analogSetPinAttenuation(ADC_IN, ADC_ATTENUATION);
 
-  Serial.println("+-------+-----------+-----------+----------+---------+");
+  Serial.printf("ADC_RESOLUTION = %d; ADC_ATTENUATIONa: %s", ADC_RESOLUTION,
+                attenuation_name(ADC_ATTENUATION).c_str());
+
+  Serial.println();
+  Serial.println( "+-------+-----------+-----------+----------+---------+");
   Serial.println("|   RAW | calc (mV) | meas (mV) | err (mV) | err (%) |");
   Serial.println("+-------+-----------+-----------+----------+---------+");
 }
