@@ -3,7 +3,7 @@
 #define ADC_IN 4
 #define LOOP_DELAY_MS 100
 #define ADC_MAX 4095
-#define V_REF 3300
+#define V_REF 3100
 
 #define ADC_RESOLUTION 12
 #define ADC_ATTENUATION ADC_6db
