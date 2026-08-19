@@ -1,1 +1,3 @@
 .cache
+**/*.lck
+.history
