@@ -1,0 +1,28 @@
+# clangd reads compile_commands.json, but parses the arm-none-eabi-g++ commands
+# with clang. Two things go wrong, both fixed here:
+#
+# 1. clang identifies as GCC 4.2.1 (-fgnuc-version=4.2.1). Arduino.h computes
+#    GCC_VERSION from __GNUC__/__GNUC_MINOR__/__GNUC_PATCHLEVEL__ and #errors
+#    below 6.3 -> "GCC version 6.3 or higher is required".
+# 2. clang looks for the C++ stdlib at arm-none-eabi/include/c++/v1 (libc++
+#    layout); the GCC toolchain ships libstdc++ at include/c++/12.3.1
+#    -> "'algorithm' file not found".
+#
+# Paths/version come from:
+#   arm-none-eabi-g++ -dumpfullversion
+#   arm-none-eabi-g++ -mcpu=cortex-m4 -mthumb -mfpu=fpv4-sp-d16 \
+#     -mfloat-abi=hard -E -x c++ -v /dev/null
+# NOTE: regenerate these if PlatformIO updates toolchain-gccarmnoneeabi or the
+# board's FPU/float-abi changes (the multilib dir below is cortex-m4 hard-float).
+# Alternatively, drop the -isystem lines and pass
+#   --query-driver=/Users/michael/.platformio/packages/toolchain-gccarmnoneeabi/bin/arm-none-eabi-*
+# to clangd from your editor; it then asks the real driver for these paths.
+CompileFlags:
+  Add:
+    - -fgnuc-version=12.3.1
+    - -isystem/Users/michael/.platformio/packages/toolchain-gccarmnoneeabi/arm-none-eabi/include/c++/12.3.1
+    - -isystem/Users/michael/.platformio/packages/toolchain-gccarmnoneeabi/arm-none-eabi/include/c++/12.3.1/arm-none-eabi/thumb/v7e-m+fp/hard
+    - -isystem/Users/michael/.platformio/packages/toolchain-gccarmnoneeabi/arm-none-eabi/include/c++/12.3.1/backward
+    - -isystem/Users/michael/.platformio/packages/toolchain-gccarmnoneeabi/lib/gcc/arm-none-eabi/12.3.1/include
+    - -isystem/Users/michael/.platformio/packages/toolchain-gccarmnoneeabi/lib/gcc/arm-none-eabi/12.3.1/include-fixed
+    - -isystem/Users/michael/.platformio/packages/toolchain-gccarmnoneeabi/arm-none-eabi/include
