@@ -5,10 +5,17 @@ enum class LedState {
   Off,
 };
 
-class Led {
-public:
-  LedState curState = LedState::Off;
+enum class LedMode {
+  On,
+  Blinking,
+};
 
+class Led {
+private:
+  LedState curState = LedState::Off;
+  LedMode curMode = LedMode::Blinking;
+
+public:
   static constexpr uint8_t LED_OUT = 15;
   static constexpr unsigned long BLINK_INTERVAL_MS = 1000;
 
@@ -26,7 +33,25 @@ public:
       digitalWrite(LED_OUT, LOW);
     }
   }
+
+  LedState get() { return curState; }
+
+  void setMode(LedMode mode) { curMode = mode; }
+
+  LedMode getMode() { return curMode; }
 };
+
+constexpr uint8_t BTN_PIN = 16;
+
+volatile bool buttonPressed = false;
+
+void buttonPressedHandler() {
+  if (digitalRead(BTN_PIN) == LOW) {
+    buttonPressed = true;
+  } else {
+    buttonPressed = false;
+  }
+}
 
 Led led;
 
@@ -38,26 +63,45 @@ void setup() {
   Serial.println("Voltage(V) | LED");
 
   led.init();
+
+  pinMode(BTN_PIN, INPUT_PULLUP);
+  attachInterrupt(BTN_PIN, buttonPressedHandler, CHANGE);
 }
 
 void loop() {
   static unsigned long lastBlink = 0; // Set to zero just in case.
-  static unsigned long iterations, iteration_ms;
+  static unsigned long iterationStartMicros, iterations;
 
-  iteration_ms = millis() - iteration_ms;
+  iterationStartMicros = micros();
+
   iterations++;
 
-  if ((iterations % 1000) == 0) { // every 1000 iteration
-    Serial.printf("Iteration time: %lu", iteration_ms);
+  if (buttonPressed) {
+    // Serial.println("button pressed");
+    if (led.getMode() == LedMode::Blinking) {
+      led.setMode(LedMode::On);
+    } else {
+      led.setMode(LedMode::Blinking);
+    }
   }
 
-  if ((millis() - lastBlink) >= Led::BLINK_INTERVAL_MS) {
-    if (led.curState == LedState::On) {
+  if (led.getMode() == LedMode::Blinking &&
+      ((millis() - lastBlink) >= Led::BLINK_INTERVAL_MS)) {
+    lastBlink = millis();
+
+    if (led.get() == LedState::On) {
       Serial.println("Led off");
       led.set(LedState::Off);
     } else {
       Serial.println("Led on");
       led.set(LedState::On);
     }
+  } else if (led.getMode() == LedMode::On) {
+    led.set(LedState::On);
+  }
+
+  if ((iterations % 10000) == 0) { // every 1000 iteration
+    Serial.printf("Iteration time: %lu (micros)\n",
+                  micros() - iterationStartMicros);
   }
 }
