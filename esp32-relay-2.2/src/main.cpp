@@ -1,107 +1,167 @@
 #include <Arduino.h>
 
-enum class LedState {
-  On,
-  Off,
-};
-
-enum class LedMode {
-  On,
-  Blinking,
-};
-
-class Led {
+// Convenience abstraction for running code after some time has elapsed
+class Timer {
 private:
-  LedState curState = LedState::Off;
-  LedMode curMode = LedMode::Blinking;
+  unsigned long delayMs;
+  unsigned long startMs;
 
 public:
-  static constexpr uint8_t LED_OUT = 15;
-  static constexpr unsigned long BLINK_INTERVAL_MS = 1000;
-
-  void init() {
-    pinMode(LED_OUT, OUTPUT);
-    set(LedState::Off);
+  Timer(unsigned long delayMs) {
+    this->delayMs = delayMs;
+    restart();
   }
 
-  void set(LedState state) {
-    curState = state;
+  Timer() { Timer(0); }
 
-    if (curState == LedState::On) {
-      digitalWrite(LED_OUT, HIGH);
-    } else {
-      digitalWrite(LED_OUT, LOW);
+  bool isReady() { return (millis() - startMs) >= delayMs; }
+
+  void restart() { startMs = millis(); }
+};
+
+// Convenience abstraction to measure time duration between start() and end()
+class DelayMeasure {
+private:
+  unsigned long measureStartMicros, measureEndMicros;
+
+  DelayMeasure(unsigned long startMs) { this->measureStartMicros = startMs; }
+
+  DelayMeasure() {
+    this->measureStartMicros = 0;
+    this->measureEndMicros = 0;
+  }
+
+public:
+  static DelayMeasure start() { return DelayMeasure(micros()); }
+
+  static DelayMeasure empty() { return DelayMeasure(0); }
+
+  bool isComplete() { return measureStartMicros != 0 && measureEndMicros != 0; }
+  bool isEmpty() { return measureStartMicros == 0 && measureEndMicros == 0; }
+
+  void end() {
+    if (!isEmpty()) {
+      this->measureEndMicros = micros();
     }
   }
 
-  LedState get() { return curState; }
-
-  void setMode(LedMode mode) { curMode = mode; }
-
-  LedMode getMode() { return curMode; }
+  unsigned long getMeasure() { return measureEndMicros - measureStartMicros; }
 };
 
-constexpr uint8_t BTN_PIN = 16;
+// Handles signal coming from GPIO to relay
+class RelayInput {
+private:
+  static uint8_t PIN;
 
-volatile bool buttonPressed = false;
+  static bool state;
 
-void buttonPressedHandler() {
-  if (digitalRead(BTN_PIN) == LOW) {
-    buttonPressed = true;
-  } else {
-    buttonPressed = false;
+public:
+  static void init(uint8_t pin, unsigned long newSwitchDelayMs) {
+    PIN = pin;
+    state = false;
+
+    pinMode(PIN, OUTPUT);
+    digitalWrite(PIN, LOW);
   }
-}
 
-Led led;
+  static bool getState() { return state; }
+
+  static void doSwitch(bool newState) {
+    state = newState;
+
+    if (state) {
+      digitalWrite(PIN, HIGH); // On true we're activating relay
+    } else {
+      digitalWrite(PIN, LOW); // On false we're disabling relay
+    }
+  }
+};
+
+uint8_t RelayInput::PIN;
+bool RelayInput::state;
+
+// Handles signal coming from relay to GPIO
+class RelayOutput {
+private:
+  static uint8_t PIN;
+  volatile static bool relayOn; // Changed in ISP
+
+public:
+  static void init(uint8_t pin, unsigned long debounceTime) {
+    PIN = pin;
+    relayOn = false;
+
+    pinMode(PIN, INPUT_PULLUP);
+  }
+
+  static uint8_t getPin() { return PIN; }
+
+  static void interruptHandler() {
+    if (digitalRead(PIN) == HIGH) {
+      relayOn = false; // HIGH -> relay is closed
+    } else {
+      relayOn = true; // LOW -> relay is open
+    }
+  }
+
+  static bool getRelayOn() { return relayOn; }
+};
+
+uint8_t RelayOutput::PIN;
+volatile bool RelayOutput::relayOn;
 
 void setup() {
   Serial.begin(115200);
+  delay(1000);
 
   Serial.println();
-  Serial.println("ESP32 LED C++ Exercise");
-  Serial.println("Voltage(V) | LED");
+  Serial.println("ESP32 Relay Exercise");
 
-  led.init();
+  RelayInput::init(15, 1000); // We will activate relay from GPIO 15 (via BC547)
 
-  pinMode(BTN_PIN, INPUT_PULLUP);
-  attachInterrupt(BTN_PIN, buttonPressedHandler, CHANGE);
+  RelayOutput::init(16); // Relay Output GPIO and Debounce MS
+
+  attachInterrupt(RelayOutput::getPin(), RelayOutput::interruptHandler, CHANGE);
 }
 
 void loop() {
-  static unsigned long lastBlink = 0; // Set to zero just in case.
-  static unsigned long iterationStartMicros, iterations;
+  static Timer relayInputTimer = Timer(1000); // Create restartable timer
+  static bool isRelayOn = RelayOutput::getRelayOn();
 
-  iterationStartMicros = micros();
+  static DelayMeasure measure = DelayMeasure::empty();
 
-  iterations++;
+  static unsigned long relayTimeMax, relayTimeMin;
 
-  if (buttonPressed) {
-    // Serial.println("button pressed");
-    if (led.getMode() == LedMode::Blinking) {
-      led.setMode(LedMode::On);
-    } else {
-      led.setMode(LedMode::Blinking);
+  // NOTE: Assuming that initially `isRelayOn != RelayOutput::getRelayOn()`
+  //       And becomes `isRelayOn == RelayOutput::getRelayOn()` on
+  //       next loop() iterations
+  if (!measure.isComplete() && isRelayOn == RelayOutput::getRelayOn()) {
+    Serial.println("{MEASURE->END} Relay switch measurement complete!");
+    measure.end();
+
+    if (relayTimeMax < measure.getMeasure()) {
+      relayTimeMax = measure.getMeasure();
     }
+
+    if (relayTimeMin == 0 || relayTimeMin > measure.getMeasure()) {
+      relayTimeMin = measure.getMeasure();
+    }
+
+    Serial.printf(
+        "{MEASURE->VAL} Relay switch time: %lu(micros) (%lu max / %lu min) \n",
+        measure.getMeasure(), relayTimeMax, relayTimeMin);
   }
 
-  if (led.getMode() == LedMode::Blinking &&
-      ((millis() - lastBlink) >= Led::BLINK_INTERVAL_MS)) {
-    lastBlink = millis();
+  if (relayInputTimer.isReady()) {
+    Serial.println("{TIMER} Toggle relay input");
+    bool newRelayState = !RelayInput::getState();
+    Serial.printf("{RELAY} Switch relay to %d \n", newRelayState ? 1 : 0);
+    isRelayOn = newRelayState;
+    RelayInput::doSwitch(newRelayState);
 
-    if (led.get() == LedState::On) {
-      Serial.println("Led off");
-      led.set(LedState::Off);
-    } else {
-      Serial.println("Led on");
-      led.set(LedState::On);
-    }
-  } else if (led.getMode() == LedMode::On) {
-    led.set(LedState::On);
-  }
+    measure = DelayMeasure::start();
+    Serial.println("{MEASURE->START} Measuring relay switch delay");
 
-  if ((iterations % 10000) == 0) { // every 1000 iteration
-    Serial.printf("Iteration time: %lu (micros)\n",
-                  micros() - iterationStartMicros);
+    relayInputTimer.restart();
   }
 }
