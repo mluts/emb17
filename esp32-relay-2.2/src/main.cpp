@@ -87,7 +87,7 @@ private:
   volatile static bool relayOn; // Changed in ISP
 
 public:
-  static void init(uint8_t pin, unsigned long debounceTime) {
+  static void init(uint8_t pin) {
     PIN = pin;
     relayOn = false;
 
@@ -136,31 +136,25 @@ void loop() {
   //       And becomes `isRelayOn == RelayOutput::getRelayOn()` on
   //       next loop() iterations
   if (!measure.isComplete() && isRelayOn == RelayOutput::getRelayOn()) {
-    Serial.println("{MEASURE->END} Relay switch measurement complete!");
+    Serial.print("\n      ... measurement complete, ");
     measure.end();
 
-    if (relayTimeMax < measure.getMeasure()) {
-      relayTimeMax = measure.getMeasure();
-    }
-
-    if (relayTimeMin == 0 || relayTimeMin > measure.getMeasure()) {
-      relayTimeMin = measure.getMeasure();
-    }
-
     Serial.printf(
-        "{MEASURE->VAL} Relay switch time: %lu(micros) (%lu max / %lu min) \n",
-        measure.getMeasure(), relayTimeMax, relayTimeMin);
+        "\n        Relay switch time: %lu(micros)\n",
+        measure.getMeasure());
   }
 
   if (relayInputTimer.isReady()) {
-    Serial.println("{TIMER} Toggle relay input");
+    Serial.println();
+    // Serial.println("{TIMER} Toggle relay input");
+    Serial.print("Timer -> Toggle Relay, ");
     bool newRelayState = !RelayInput::getState();
-    Serial.printf("{RELAY} Switch relay to %d \n", newRelayState ? 1 : 0);
+    Serial.printf("\n  ...set relay to %d, ", newRelayState ? 1 : 0);
     isRelayOn = newRelayState;
     RelayInput::doSwitch(newRelayState);
 
     measure = DelayMeasure::start();
-    Serial.println("{MEASURE->START} Measuring relay switch delay");
+    Serial.print("\n    ...start measure output delay, ");
 
     relayInputTimer.restart();
   }
