@@ -1,5 +1,9 @@
 #include <Arduino.h>
 
+constexpr uint8_t LED_PIN = 15;
+constexpr uint8_t BTN_PIN = 16;
+constexpr unsigned long BLINK_INTERVAL_MS = 15;
+
 enum class LedState {
   On,
   Off,
@@ -12,48 +16,65 @@ enum class LedMode {
 
 class Led {
 private:
-  LedState curState = LedState::Off;
-  LedMode curMode = LedMode::Blinking;
+  static LedState curState;
+  static LedMode curMode;
 
 public:
-  static constexpr uint8_t LED_OUT = 15;
-  static constexpr unsigned long BLINK_INTERVAL_MS = 1000;
+  static void init() {
+    curState = LedState::Off;
+    curMode = LedMode::Blinking;
 
-  void init() {
-    pinMode(LED_OUT, OUTPUT);
+    pinMode(LED_PIN, OUTPUT);
     set(LedState::Off);
   }
 
-  void set(LedState state) {
+  static void set(LedState state) {
     curState = state;
 
     if (curState == LedState::On) {
-      digitalWrite(LED_OUT, HIGH);
+      digitalWrite(LED_PIN, HIGH);
     } else {
-      digitalWrite(LED_OUT, LOW);
+      digitalWrite(LED_PIN, LOW);
     }
   }
 
-  LedState get() { return curState; }
+  static LedState get() { return curState; }
 
-  void setMode(LedMode mode) { curMode = mode; }
+  static void setMode(LedMode mode) { curMode = mode; }
 
-  LedMode getMode() { return curMode; }
+  static LedMode getMode() { return curMode; }
 };
 
-constexpr uint8_t BTN_PIN = 16;
+LedState Led::curState;
+LedMode Led::curMode;
 
-volatile bool buttonPressed = false;
+class Btn {
+private:
+  static uint8_t pin;
 
-void buttonPressedHandler() {
-  if (digitalRead(BTN_PIN) == LOW) {
-    buttonPressed = true;
-  } else {
+  static volatile bool buttonPressed;
+
+public:
+  static void init() {
+    pin = BTN_PIN;
     buttonPressed = false;
+    pinMode(pin, INPUT_PULLUP);
+    attachInterrupt(pin, Btn::buttonPressedHandler, CHANGE);
   }
-}
 
-Led led;
+  static void buttonPressedHandler() {
+    if (digitalRead(BTN_PIN) == LOW) {
+      buttonPressed = true;
+    } else {
+      buttonPressed = false;
+    }
+  }
+
+  static bool isPressed() { return buttonPressed; }
+};
+
+uint8_t Btn::pin;
+volatile bool Btn::buttonPressed;
 
 void setup() {
   Serial.begin(115200);
@@ -61,11 +82,6 @@ void setup() {
   Serial.println();
   Serial.println("ESP32 LED C++ Exercise");
   Serial.println("Voltage(V) | LED");
-
-  led.init();
-
-  pinMode(BTN_PIN, INPUT_PULLUP);
-  attachInterrupt(BTN_PIN, buttonPressedHandler, CHANGE);
 }
 
 void loop() {
@@ -76,28 +92,27 @@ void loop() {
 
   iterations++;
 
-  if (buttonPressed) {
-    // Serial.println("button pressed");
-    if (led.getMode() == LedMode::Blinking) {
-      led.setMode(LedMode::On);
+  if (Btn::isPressed()) {
+    if (Led::getMode() == LedMode::Blinking) {
+      Led::setMode(LedMode::On);
     } else {
-      led.setMode(LedMode::Blinking);
+      Led::setMode(LedMode::Blinking);
     }
   }
 
-  if (led.getMode() == LedMode::Blinking &&
-      ((millis() - lastBlink) >= Led::BLINK_INTERVAL_MS)) {
+  if (Led::getMode() == LedMode::Blinking &&
+      ((millis() - lastBlink) >= BLINK_INTERVAL_MS)) {
     lastBlink = millis();
 
-    if (led.get() == LedState::On) {
+    if (Led::get() == LedState::On) {
       Serial.println("Led off");
-      led.set(LedState::Off);
+      Led::set(LedState::Off);
     } else {
       Serial.println("Led on");
-      led.set(LedState::On);
+      Led::set(LedState::On);
     }
-  } else if (led.getMode() == LedMode::On) {
-    led.set(LedState::On);
+  } else if (Led::getMode() == LedMode::On) {
+    Led::set(LedState::On);
   }
 
   if ((iterations % 10000) == 0) { // every 1000 iteration
