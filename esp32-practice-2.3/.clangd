@@ -1,0 +1,9 @@
+CompileFlags:
+  Remove:
+    - -m*                            # -mlongcalls, -mtext-section-literals, ...
+    - -fstrict-volatile-bitfields
+    - -fno-tree-switch-conversion
+
+# Diagnostics:
+# 1. Unknown argument: '-fstrict-volatile-bitfields' [drv_unknown_argument]
+# 2. Unknown argument: '-fno-tree-switch-conversion' [drv_unknown_argument]

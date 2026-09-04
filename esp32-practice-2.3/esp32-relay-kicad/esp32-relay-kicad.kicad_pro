@@ -256,7 +256,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "kicad-motor.kicad_pro",
+    "filename": "esp32-relay-kicad.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -424,17 +424,17 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "kicad-motor.kicad_sch",
+        "filename": "esp32-relay-kicad.kicad_sch",
         "name": "Root",
-        "uuid": "10280a90-e3ed-46ba-a8d9-d2e44fb78c24"
+        "uuid": "cefb5245-9361-4021-aff4-1650e95f3c64"
       }
     ],
-    "used_designators": "RV1,#PWR1-2,Q1,D1,R1,M1,U1",
+    "used_designators": "#FLG1-3,R1-2,Q1,#PWR1-5,K1,U1",
     "variants": []
   },
   "sheets": [
     [
-      "10280a90-e3ed-46ba-a8d9-d2e44fb78c24",
+      "cefb5245-9361-4021-aff4-1650e95f3c64",
       "Root"
     ]
   ],
