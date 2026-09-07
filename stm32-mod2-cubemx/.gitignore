@@ -1,0 +1,3 @@
+*.{a,o,bin,elf,dblite,ld}
+STM32CubeIDE
+.pio
