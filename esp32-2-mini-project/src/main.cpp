@@ -1,99 +1,148 @@
 #include <Arduino.h>
+#include <tuple>
 
-enum class LedMode { On, Off, Blinking };
+const uint8_t GREEN_PIN_OUT = 15;
+const uint8_t YELLOW_PIN_OUT = 16;
+const uint8_t RED_PIN_OUT = 17;
 
-enum class TrafficMode { Green, GreenBlinking, Yellow, Red, YellowAndRed, Off };
+const uint32_t MAX_PROGRAM_STEPS = 20;
+const uint8_t TIMER_NO = 0;
+// 80MHz / 80 = 1MHz
+//  -> makes 1_000_000 ticks per second
+const uint32_t TIMER_DIVIDER = 80;
 
-class TrafficModeStep {
+hw_timer_t *timer = NULL;
+
+enum class TrafficMode { Green, Yellow, Red, YellowAndRed, Off };
+
+class TrafficProgram {
 private:
-  TrafficMode mode;
-  uint32_t totalSteps;
-  uint32_t countSteps;
+  std::tuple<TrafficMode, unsigned long> steps[MAX_PROGRAM_STEPS];
+  uint32_t stepsCount = 0;
+
+  // This is used by ISR
+  volatile uint32_t currentTrafficModeStep = 0;
+  volatile unsigned long currentTrafficModeStepMs = 0;
+
+  uint8_t greenPin = NULL;
+  uint8_t redPin = NULL;
+  uint8_t yellowPin = NULL;
+  bool pinsInitialized = false;
 
 public:
-  TrafficModeStep(TrafficMode mode, uint32_t totalSteps) {
-    this->mode = mode;
-    this->totalSteps = totalSteps;
-    this->countSteps = 0;
+  void addProgramStep(std::tuple<TrafficMode, unsigned long> step) {
+    this->steps[this->stepsCount] = step;
+    this->stepsCount++;
   }
 
-  // increment step
-  // return true if reached totalSteps
-  bool incrementSteps() {
-    this->countSteps++;
+  void setupPins(uint8_t greenPin, uint8_t yellowPin, uint8_t redPin) {
+    this->greenPin = greenPin;
+    this->yellowPin = yellowPin;
+    this->redPin = redPin;
 
-    return this->countSteps >= this->totalSteps;
+    pinMode(this->greenPin, OUTPUT);
+    pinMode(this->yellowPin, OUTPUT);
+    pinMode(this->redPin, OUTPUT);
+
+    this->pinsInitialized = true;
   }
-};
 
-class Led {
+  void writePins() {
+    if (this->stepsCount == 0 || !this->pinsInitialized) {
+      return;
+    }
 
-private:
-  uint8_t ledPin;
-  LedMode mode = LedMode::Off;
-  unsigned long modeSetAt = 0;
-
-  unsigned long blinkingPeriod = 1000;
-  unsigned long blinkedAt = 0;
-  bool blinkingState = false;
-
-  void pinWrite() {
-    switch (this->mode) {
-    case LedMode::On:
-      digitalWrite(this->ledPin, HIGH);
+    switch (std::get<0>(this->steps[this->currentTrafficModeStep])) {
+    case TrafficMode::Green:
+      digitalWrite(this->greenPin, HIGH);
+      digitalWrite(this->yellowPin, LOW);
+      digitalWrite(this->redPin, LOW);
       break;
 
-    case LedMode::Off:
-      digitalWrite(this->ledPin, LOW);
+    case TrafficMode::Off:
+      digitalWrite(this->greenPin, LOW);
+      digitalWrite(this->yellowPin, LOW);
+      digitalWrite(this->redPin, LOW);
       break;
 
-    case LedMode::Blinking:
-      if (this->blinkingState) {
-        digitalWrite(this->ledPin, HIGH);
-      } else {
-        digitalWrite(this->ledPin, LOW);
-      }
+    case TrafficMode::YellowAndRed:
+      digitalWrite(this->greenPin, LOW);
+      digitalWrite(this->yellowPin, HIGH);
+      digitalWrite(this->redPin, HIGH);
+      break;
+
+    case TrafficMode::Red:
+      digitalWrite(this->greenPin, LOW);
+      digitalWrite(this->yellowPin, LOW);
+      digitalWrite(this->redPin, HIGH);
+      break;
+
+    case TrafficMode::Yellow:
+      digitalWrite(this->greenPin, LOW);
+      digitalWrite(this->yellowPin, HIGH);
+      digitalWrite(this->redPin, LOW);
       break;
     }
   }
 
-public:
-  Led(uint8_t pin) { this->ledPin = pin; }
+  void ARDUINO_ISR_ATTR tick(unsigned long msPassed) {
+    unsigned long curStepDuration =
+        std::get<1>(this->steps[this->currentTrafficModeStep]);
 
-  void setup() { pinMode(this->ledPin, OUTPUT); }
+    this->currentTrafficModeStepMs += msPassed;
 
-  void setBlinkingPeriod(unsigned long period) {
-    this->blinkingPeriod = period;
+    // when current step is overdue
+    if (this->currentTrafficModeStepMs >= curStepDuration) {
+      // reset next step time
+      this->currentTrafficModeStepMs = 0;
+      // `+ 1` switches to next step
+      // `% this->stepsCount` switches to first step
+      this->currentTrafficModeStep =
+          (this->currentTrafficModeStep + 1) % this->stepsCount;
+    }
   }
-
-  void setMode(LedMode newMode) {
-    this->modeSetAt = millis();
-    this->mode = newMode;
-  }
-
-  void update() {}
 };
 
-Led greenLed = Led(16);
-Led yellowLed = Led(17);
-Led redLed = Led(18);
+TrafficProgram program = TrafficProgram();
 
-TrafficModeStep steps[] = {
-  TrafficModeStep(TrafficMode::Green, 10),
-  TrafficModeStep(TrafficMode::GreenBlinking, 6),
-  TrafficModeStep(TrafficMode::Yellow, 6),
-};
+void ARDUINO_ISR_ATTR onTimer() { program.tick(500); }
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
 
   Serial.println();
-  Serial.println("ESP32 2.5 Exercise - Timers, Watchdog");
+  Serial.println("ESP32 Mini Project - Traffic Lights");
 
-  greenLed.setup();
-  redLed.setup();
-  yellowLed.setup();
+  // 5 seconds green
+  program.addProgramStep({TrafficMode::Green, 5000});
+
+  // 3 seconds green blinking
+  program.addProgramStep({TrafficMode::Off, 500});
+  program.addProgramStep({TrafficMode::Green, 500});
+  program.addProgramStep({TrafficMode::Off, 500});
+  program.addProgramStep({TrafficMode::Green, 500});
+  program.addProgramStep({TrafficMode::Off, 500});
+  program.addProgramStep({TrafficMode::Green, 500});
+
+  // 2 seconds yellow
+  program.addProgramStep({TrafficMode::Yellow, 2000});
+
+  // 5 seconds red
+  program.addProgramStep({TrafficMode::Red, 5000});
+
+  // 2 seconds yellow and red (get ready)
+  program.addProgramStep({TrafficMode::YellowAndRed, 2000});
+
+  program.setupPins(GREEN_PIN_OUT, YELLOW_PIN_OUT, RED_PIN_OUT);
+
+  timer = timerBegin(TIMER_NO, TIMER_DIVIDER, true);
+  timerAttachInterrupt(timer, onTimer, true);
+  timerAlarmWrite(timer, 500000, true);
+  timerAlarmEnable(timer);
 }
 
-void loop() {}
+void loop() {
+  program.writePins();
+  delay(10);
+}
