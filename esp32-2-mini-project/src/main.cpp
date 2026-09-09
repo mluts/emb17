@@ -31,6 +31,10 @@ private:
 
 public:
   void addProgramStep(std::tuple<TrafficMode, unsigned long> step) {
+    if (stepsCount >= MAX_PROGRAM_STEPS) {
+      return;
+    }
+
     this->steps[this->stepsCount] = step;
     this->stepsCount++;
   }
