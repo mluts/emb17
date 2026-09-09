@@ -86,6 +86,10 @@ public:
   }
 
   void ARDUINO_ISR_ATTR tick(unsigned long msPassed) {
+    if (this->stepsCount == 0) {
+      return;
+    }
+
     unsigned long curStepDuration =
         std::get<1>(this->steps[this->currentTrafficModeStep]);
 
