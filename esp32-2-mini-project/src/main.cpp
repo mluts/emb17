@@ -5,7 +5,7 @@ const uint8_t GREEN_PIN_OUT = 15;
 const uint8_t YELLOW_PIN_OUT = 16;
 const uint8_t RED_PIN_OUT = 17;
 
-const uint32_t MAX_PROGRAM_STEPS = 20;
+const uint32_t MAX_PROGRAM_STEPS = 100;
 const uint8_t TIMER_NO = 0;
 // 80MHz / 80 = 1MHz
 //  -> makes 1_000_000 ticks per second
