@@ -11,6 +11,8 @@ const uint8_t TIMER_NO = 0;
 //  -> makes 1_000_000 ticks per second
 const uint32_t TIMER_DIVIDER = 80;
 
+const unsigned long TIMER_TICK_MS = 500;
+
 hw_timer_t *timer = NULL;
 
 enum class TrafficMode { Green, Yellow, Red, YellowAndRed, Off };
@@ -113,7 +115,7 @@ public:
 
 TrafficProgram program = TrafficProgram();
 
-void ARDUINO_ISR_ATTR onTimer() { program.tick(500); }
+void ARDUINO_ISR_ATTR onTimer() { program.tick(TIMER_TICK_MS); }
 
 void setup() {
   Serial.begin(115200);
@@ -146,7 +148,7 @@ void setup() {
 
   timer = timerBegin(TIMER_NO, TIMER_DIVIDER, true);
   timerAttachInterrupt(timer, onTimer, true);
-  timerAlarmWrite(timer, 500000, true);
+  timerAlarmWrite(timer, TIMER_TICK_MS * 1000, true);
   timerAlarmEnable(timer);
 }
 
