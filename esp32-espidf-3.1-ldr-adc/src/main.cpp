@@ -19,6 +19,7 @@
 
 #define LED_GPIO GPIO_NUM_5
 
+// Reads calibrated voltage
 int read_raw_voltage(adc_oneshot_unit_handle_t unit_handle, adc_channel_t chan,
                      adc_cali_handle_t cali_handle) {
   int adc_raw_val, adc_mv;
@@ -30,6 +31,7 @@ int read_raw_voltage(adc_oneshot_unit_handle_t unit_handle, adc_channel_t chan,
   return adc_mv;
 }
 
+// Reads raw voltage <samples> times AND returns Simple Moving Average
 int read_sma_voltage(adc_oneshot_unit_handle_t unit_handle, adc_channel_t chan,
                      adc_cali_handle_t cali_handle, int samples) {
   int sum = 0;
@@ -85,6 +87,7 @@ extern "C" void app_main() {
     static bool light = false;
     static int ldr_mv = 0;
 
+    // Read LDR Voltage
     ldr_mv =
         read_sma_voltage(adc1_handle, LDR_CHANNEL, cali_handle, LDR_SAMPLES);
 
@@ -97,7 +100,6 @@ extern "C" void app_main() {
 
     gpio_set_level(LED_GPIO, !light);
 
-    // printf("ADC(RAW) = %d, ADC(mV) = %d \n", adc_raw_val, adc_voltage);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
