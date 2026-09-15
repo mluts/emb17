@@ -5,75 +5,57 @@
 
 #include "driver/gpio.h"
 #include "driver/gptimer.h"
+#include "esp_adc/adc_oneshot.h"
+#include "soc/adc_channel.h"
+// #include "esp_check.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_err.h"
 
-#define LED_OUT GPIO_NUM_16
-#define BUTTON_IN GPIO_NUM_15
+#define LDR_CHANNEL ADC_CHANNEL_3 // GPIO4
 
-static bool IRAM_ATTR timer_on_cb(gptimer_handle_t timer,
-                                  const gptimer_alarm_event_data_t *edata,
-                                  void *user_ctx) {
-  return true;
+#define LDR_DARK 1500
+
+int read_raw_voltage(adc_oneshot_unit_handle_t unit_handle, adc_channel_t chan,
+                     adc_cali_handle_t cali_handle) {
+  int adc_raw_val, adc_mv;
+  // Read raw val
+  ESP_ERROR_CHECK(adc_oneshot_read(unit_handle, chan, &adc_raw_val));
+  // raw -> calibrated voltage
+  ESP_ERROR_CHECK(adc_cali_raw_to_voltage(cali_handle, adc_raw_val, &adc_mv));
+
+  return adc_mv;
 }
 
 extern "C" void app_main() {
-  // Initialize LED GPIO
-  gpio_config_t gpio_led_conf = {};
-  gpio_led_conf.pin_bit_mask = 1ull << LED_OUT;
-  gpio_led_conf.mode = GPIO_MODE_OUTPUT;
+  // Initializing ADC1 Unit
+  adc_oneshot_unit_handle_t adc1_handle;
+  adc_oneshot_unit_init_cfg_t adc1_config = {.unit_id = ADC_UNIT_1,
+                                             .clk_src = ADC_RTC_CLK_SRC_DEFAULT,
+                                             .ulp_mode = ADC_ULP_MODE_DISABLE};
+  ESP_ERROR_CHECK(adc_oneshot_new_unit(&adc1_config, &adc1_handle));
 
-  // (good practice)
-  // Disabling pullup/pulldown for OUTPUT
-  gpio_led_conf.pull_up_en = GPIO_PULLUP_DISABLE;
-  gpio_led_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+  // Initializing ADC CHANNEL for LDR
+  adc_oneshot_chan_cfg_t adc_chan_cfg = {.atten = ADC_ATTEN_DB_12,
+                                         .bitwidth = ADC_BITWIDTH_DEFAULT};
+  ESP_ERROR_CHECK(
+      adc_oneshot_config_channel(adc1_handle, LDR_CHANNEL, &adc_chan_cfg));
 
-  // disable interrupts
-  gpio_led_conf.intr_type = GPIO_INTR_DISABLE;
+  adc_cali_handle_t cali_handle;
+  adc_cali_curve_fitting_config_t cali_config = {.unit_id = adc1_config.unit_id,
+                                                 .chan = LDR_CHANNEL,
+                                                 .atten = adc_chan_cfg.atten,
+                                                 .bitwidth =
+                                                     adc_chan_cfg.bitwidth};
 
-  // Initialize BTN GPIO
-  gpio_config_t gpio_btn_conf = {};
-  gpio_btn_conf.pin_bit_mask = 1ull << BUTTON_IN;
-  gpio_btn_conf.mode = GPIO_MODE_INPUT;
-  gpio_btn_conf.pull_up_en = GPIO_PULLUP_ENABLE;
-  gpio_btn_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-  gpio_btn_conf.intr_type = GPIO_INTR_DISABLE;
-
-  // Configure LED and BTN GPIO
-  gpio_config(&gpio_led_conf);
-  gpio_config(&gpio_btn_conf);
-
-  // Configure timer
-  gptimer_handle_t gptimer = NULL;
-
-  gptimer_config_t timer_config = {};
-  timer_config.clk_src = GPTIMER_CLK_SRC_DEFAULT;
-  timer_config.direction = GPTIMER_COUNT_UP;
-  timer_config.resolution_hz = 1000; // 1kHz
-  // timer_config.auto_reload = true; 
-
-  gptimer_event_callbacks_t timer_callbacks = {};
-  gptimer_register_event_callbacks(gptimer, &timer_callbacks, NULL);
-
-  gptimer_alarm_config_t alarm_config = {};
-  alarm_config.alarm_count = 1000;
-  alarm_config.reload_count = 0;
-  alarm_config.flags.auto_reload_on_alarm = false;
-
-  gptimer_new_timer(&timer_config, &gptimer);
-
-  gpio_set_level(LED_OUT, 0);
+  // Initializing calibration scheme for LDR ADC CHANNEL
+  ESP_ERROR_CHECK(
+      adc_cali_create_scheme_curve_fitting(&cali_config, &cali_handle));
 
   while (1) {
-    int btn_state = gpio_get_level(BUTTON_IN);
+    printf("ADC(mV) = %d \n",
+           read_raw_voltage(adc1_handle, LDR_CHANNEL, cali_handle));
 
-    if (btn_state == 1) {
-      gpio_set_level(LED_OUT, 0);
-    } else {
-      gpio_set_level(LED_OUT, 1);
-    }
-
-    // vTaskDelay(200 / portTICK_PERIOD_MS);
-    vTaskDelay(100);
-    // gpio_set_level(LED_OUT, 0);
-    // vTaskDelay(200 / portTICK_PERIOD_MS);
+    // printf("ADC(RAW) = %d, ADC(mV) = %d \n", adc_raw_val, adc_voltage);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
