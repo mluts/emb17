@@ -13,7 +13,11 @@
 
 #define LDR_CHANNEL ADC_CHANNEL_3 // GPIO4
 
-#define LDR_DARK 1500
+#define LDR_THRESHOLD 1000
+#define LDR_DELTA 200
+#define LDR_SAMPLES 100
+
+#define LED_GPIO GPIO_NUM_5
 
 int read_raw_voltage(adc_oneshot_unit_handle_t unit_handle, adc_channel_t chan,
                      adc_cali_handle_t cali_handle) {
@@ -24,6 +28,20 @@ int read_raw_voltage(adc_oneshot_unit_handle_t unit_handle, adc_channel_t chan,
   ESP_ERROR_CHECK(adc_cali_raw_to_voltage(cali_handle, adc_raw_val, &adc_mv));
 
   return adc_mv;
+}
+
+int read_sma_voltage(adc_oneshot_unit_handle_t unit_handle, adc_channel_t chan,
+                     adc_cali_handle_t cali_handle, int samples) {
+  int sum = 0;
+  if (samples <= 0) {
+    return -1;
+  }
+
+  for (int i = 0; i < samples; i++) {
+    sum += read_raw_voltage(unit_handle, chan, cali_handle);
+  }
+
+  return sum / samples;
 }
 
 extern "C" void app_main() {
@@ -51,9 +69,33 @@ extern "C" void app_main() {
   ESP_ERROR_CHECK(
       adc_cali_create_scheme_curve_fitting(&cali_config, &cali_handle));
 
+  // Initialize LED GPIO
+  gpio_config_t gpio_led_conf = {};
+  gpio_led_conf.pin_bit_mask = 1ULL << LED_GPIO;
+  gpio_led_conf.mode = GPIO_MODE_OUTPUT;
+  // (good practice)
+  // Disabling pullup/pulldown for OUTPUT
+  gpio_led_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+  gpio_led_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+  // disable interrupts
+  gpio_led_conf.intr_type = GPIO_INTR_DISABLE;
+  gpio_config(&gpio_led_conf);
+
   while (1) {
-    printf("ADC(mV) = %d \n",
-           read_raw_voltage(adc1_handle, LDR_CHANNEL, cali_handle));
+    static bool light = false;
+    static int ldr_mv = 0;
+
+    ldr_mv =
+        read_sma_voltage(adc1_handle, LDR_CHANNEL, cali_handle, LDR_SAMPLES);
+
+    printf("ADC(mV, %d samples) = %d \n", LDR_SAMPLES, ldr_mv);
+
+    if ((light && ldr_mv < (LDR_THRESHOLD - LDR_DELTA)) ||
+        (!light && ldr_mv > (LDR_THRESHOLD + LDR_DELTA))) {
+      light = !light;
+    }
+
+    gpio_set_level(LED_GPIO, !light);
 
     // printf("ADC(RAW) = %d, ADC(mV) = %d \n", adc_raw_val, adc_voltage);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
