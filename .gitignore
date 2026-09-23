@@ -1,4 +1,8 @@
 .cache
+.pio/
+# ESP-IDF generates sdkconfig.<env>; only the hand-written defaults are source.
+sdkconfig.*
+!sdkconfig.defaults
 **/*.lck
 .history
 .DS_Store
