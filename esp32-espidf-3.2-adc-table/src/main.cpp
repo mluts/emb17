@@ -68,6 +68,6 @@ extern "C" void app_main() {
 
     printf("%6d | %12d | %10d | %+9.2f\n", raw, u_manual, u_cali, error);
 
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
