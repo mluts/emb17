@@ -1,5 +1,19 @@
-.cache
-**/*.lck
-.history
+# Editor / OS
 .DS_Store
-**/.pio
+.history
+**/*.lck
+
+# Tooling caches (clangd, PlatformIO) — match at any depth
+.cache
+.pio
+
+# ESP-IDF per-board generated config (sdkconfig.defaults stays tracked)
+sdkconfig.*
+!sdkconfig.defaults
+
+# STM32 / SCons build artifacts
+*.o
+*.a
+*.elf
+*.bin
+*.dblite
