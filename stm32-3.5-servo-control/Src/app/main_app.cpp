@@ -1,19 +1,92 @@
-#include "stm32f4xx_hal.h"
+#include "encoder/encoder.h"
 #include "main.h"
+#include "pwm/pwm.h"
+#include "servo/servo.h"
+#include "stm32f4xx_hal.h"
+#include <stdio.h>
 
-extern "C" const uint16_t VREFINT_CAL = *VREFINT_CAL_ADDR;
+#define ENCODER_A_PORT GPIOA
+#define ENCODER_A_PIN GPIO_PIN_0
+#define ENCODER_B_PORT GPIOA
+#define ENCODER_B_PIN GPIO_PIN_1
+#define ENCODER_BUTTON_PORT GPIOA
+#define ENCODER_BUTTON_PIN GPIO_PIN_2
+#define ENCODER_DEBOUNCE_NS 2000000
 
-extern "C" ADC_HandleTypeDef hadc1;
+#define ENCODER_PULSES_PER_STEP 4
+
+#define SERVO_GPIO_PORT PWM_PORT_B
+#define SERVO_GPIO_PIN 4
+#define SERVO_STEP_ANGLE 5
+
+int32_t read_position(EncoderCtx_t *ctx) {
+  static int32_t position = 0;
+  Encoder_Read(ctx, &position);
+  return position;
+}
+
+int32_t clamp_angle(int32_t angle) {
+  if (angle < SERVO_MIN_ANGLE) {
+    return SERVO_MIN_ANGLE;
+  }
+  if (angle > SERVO_MAX_ANGLE) {
+    return SERVO_MAX_ANGLE;
+  }
+  return angle;
+}
 
 extern "C" void main_cpp(void) {
+  // Wait for serial interface setup
+  HAL_Delay(1000);
+  bool error = false;
+
+  printf("Starting...\n");
+  EncoderCtx_t encoder = {0};
+
+  if (!Encoder_Init(&encoder, ENCODER_A_PORT, ENCODER_A_PIN, ENCODER_B_PORT,
+                    ENCODER_B_PIN, ENCODER_BUTTON_PORT, ENCODER_BUTTON_PIN,
+                    ENCODER_DEBOUNCE_NS)) {
+    error = true;
+    printf("Encoder init failed\n");
+  }
+
+  PwmDriver_t servo_pwm = {0};
+  Servo_t servo = {0};
+
+  if (!error && !Pwm_InitByPin(&servo_pwm, SERVO_GPIO_PORT, SERVO_GPIO_PIN,
+                               SERVO_FREQUENCY_HZ, 0)) {
+    error = true;
+    printf("PWM init failed\n");
+  }
+
+  if (!error && !Servo_Init(&servo, &servo_pwm)) {
+    error = true;
+    printf("Servo init failed\n");
+  }
+
+  // Start from leftmost position
+  int32_t angle = SERVO_MIN_ANGLE;
+
+  if (!error) {
+    printf("offset: %d\n", (int)(angle - SERVO_MIN_ANGLE));
+  }
+
   while (1) {
-    if (HAL_ADC_Start(&hadc1) == HAL_OK) {
-      if (HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
-        int raw_ref = HAL_ADC_GetValue
-        int raw = HAL_ADC_GetValue(&hadc1);
-        int vdda = (VREFINT_CAL_VREF * VREFINT_CAL) / raw;
-      }
+    if (error) {
+      printf("Error was detected, please look for error messages\n");
+      HAL_Delay(10000);
+      continue;
     }
-    HAL_Delay(100);
+
+    int32_t steps = read_position(&encoder) / ENCODER_PULSES_PER_STEP;
+    int32_t new_angle = clamp_angle(SERVO_MIN_ANGLE + steps * SERVO_STEP_ANGLE);
+
+    if (new_angle != angle) {
+      angle = new_angle;
+      Servo_SetAngle(&servo, (uint16_t)angle);
+      printf("position: %d; offset: %d\n", steps, (int)(angle - SERVO_MIN_ANGLE));
+    }
+
+    HAL_Delay(10);
   }
 }
