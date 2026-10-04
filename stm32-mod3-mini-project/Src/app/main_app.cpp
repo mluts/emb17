@@ -2,6 +2,7 @@
 #include "main.h"
 #include "pwm/pwm.h"
 #include "servo/servo.h"
+#include "sound/sound.h"
 #include "stm32f4xx_hal.h"
 #include <stdio.h>
 
@@ -18,6 +19,11 @@
 #define SERVO_GPIO_PORT PWM_PORT_B
 #define SERVO_GPIO_PIN 4
 #define SERVO_STEP_ANGLE 5
+
+#define SOUND_FREQUENCY_HZ 2200
+#define SOUND_GPIO_PORT PWM_PORT_B
+#define SOUND_GPIO_PIN 6
+#define SOUND_GPIO_TIMER PWM_TIM4
 
 int32_t read_position(EncoderCtx_t *ctx) {
   static int32_t position = 0;
@@ -62,9 +68,25 @@ extern "C" void main_cpp(void) {
   PwmDriver_t servo_pwm = {};
   Servo_t servo = {0};
 
+  PwmDriver_t sound_pwm = {};
+
   configure_encoder(&encoder, &error);
 
   configure_servo(&servo, &servo_pwm, &error);
+
+  if (!error) {
+    uint32_t pwm_frequency_hz = Sound_GetPwmFrequency(SOUND_FREQUENCY_HZ);
+    if (!Pwm_InitByPinAndTimer(&sound_pwm, SOUND_GPIO_PORT, SOUND_GPIO_PIN,
+                               SOUND_GPIO_TIMER, pwm_frequency_hz, 50)) {
+      error = true;
+      printf("Sound PWM init failed\n");
+    }
+  }
+
+  if (!error && !Sound_Init(&sound_pwm, SOUND_FREQUENCY_HZ)) {
+    error = true;
+    printf("Sound init failed\n");
+  }
 
   // Start from leftmost position
   int32_t angle = SERVO_MIN_ANGLE;
