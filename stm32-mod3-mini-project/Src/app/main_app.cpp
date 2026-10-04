@@ -224,6 +224,7 @@ extern "C" void main_cpp(void) {
     int32_t pulses = read_position(&encoder);
     int32_t steps = pulses / ENCODER_PULSES_PER_STEP;
 
+    // On longpress - reset initial angle
     if (button_event == ButtonEvent_LongPress) {
       prev_steps = steps;
       angle = SERVO_MAX_ANGLE / 2;
@@ -231,6 +232,7 @@ extern "C" void main_cpp(void) {
       printf("recalibrated: encoder origin set to center\n");
     }
 
+    // Servo rotation
     int32_t step_angle = get_rotation_angle(button_event);
     int32_t delta_steps = steps - prev_steps;
 
@@ -247,6 +249,7 @@ extern "C" void main_cpp(void) {
       }
     }
 
+    // Max servo angle alarm
     bool at_limit = (angle == SERVO_MIN_ANGLE || angle == SERVO_MAX_ANGLE);
 
     if (at_limit && !at_limit_prev && !sound_playing) {
