@@ -1,9 +1,5 @@
-#include "encoder/encoder.h"
 #include "main.h"
 #include "printf/usb_printf.h"
-#include "pwm/pwm.h"
-#include "servo/servo.h"
-#include "sound/sound.h"
 #include "stm32f4xx_hal.h"
 #include <cstring>
 #include <stdio.h>
@@ -16,12 +12,6 @@ bool get_key_button() {
 }
 
 void toggle_led() {
-  // if (status) {
-  //   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
-  // } else {
-  //   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-  // }
-
   HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 }
 
@@ -32,6 +22,7 @@ extern "C" void main_cpp(void) {
   printf("Starting...\n");
 
   bool last_button_state = 0, button_state = 0;
+  uint8_t rx_byte = 0;
 
   while (1) {
     button_state = get_key_button();
@@ -39,11 +30,14 @@ extern "C" void main_cpp(void) {
     if (button_state != last_button_state && button_state) {
       printf("button_pressed=%d\n", button_state);
       printf("sending UART msg: %s\n", uart_msg);
-      toggle_led();
       HAL_UART_Transmit(&huart1, (uint8_t *)&uart_msg, strlen(uart_msg),
                         UART_TIMEOUT_MS);
     }
     last_button_state = button_state;
+
+    if (HAL_UART_Receive(&huart1, &rx_byte, 1, 10) == HAL_OK) {
+      toggle_led();
+    }
 
     HAL_Delay(100);
   }
