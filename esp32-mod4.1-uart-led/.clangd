@@ -1,8 +1,23 @@
 CompileFlags:
   Remove:
-    - -m*                            # -mlongcalls, -mtext-section-literals, ...
+    - -m*
+    - -fno-shrink-wrap
     - -fstrict-volatile-bitfields
     - -fno-tree-switch-conversion
+    - -fno-malloc-dce
+    - -fzero-init-padding-bits=*
+    - -Wno-old-style-declaration
+    - -freorder-blocks
+    - -fno-stack-protector
+    - -specs=*
+    - -fmacro-prefix-map=*
+
+Diagnostics:
+  UnusedIncludes: None
+  # Suppress:
+  #   - unknown_typename
+  #   - redefinition
+  #   - redefinition_different_typedef
 
 # Diagnostics:
 # 1. Unknown argument: '-fstrict-volatile-bitfields' [drv_unknown_argument]
