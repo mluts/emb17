@@ -15,6 +15,16 @@ bool get_key_button() {
   return HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_0) == GPIO_PIN_RESET;
 }
 
+void toggle_led() {
+  // if (status) {
+  //   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
+  // } else {
+  //   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
+  // }
+
+  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+}
+
 extern "C" void main_cpp(void) {
   // Wait for serial interface setup
   HAL_Delay(1000);
@@ -29,7 +39,9 @@ extern "C" void main_cpp(void) {
     if (button_state != last_button_state && button_state) {
       printf("button_pressed=%d\n", button_state);
       printf("sending UART msg: %s\n", uart_msg);
-      HAL_UART_Transmit(&huart1, (uint8_t *)&uart_msg, strlen(uart_msg), UART_TIMEOUT_MS);
+      toggle_led();
+      HAL_UART_Transmit(&huart1, (uint8_t *)&uart_msg, strlen(uart_msg),
+                        UART_TIMEOUT_MS);
     }
     last_button_state = button_state;
 
