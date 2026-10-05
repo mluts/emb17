@@ -33,6 +33,8 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 void main_cpp(void);
 
+extern UART_HandleTypeDef huart1;
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
