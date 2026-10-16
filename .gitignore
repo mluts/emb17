@@ -17,3 +17,5 @@ sdkconfig.*
 *.elf
 *.bin
 *.dblite
+
+*/compile_commands.json
