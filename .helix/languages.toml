@@ -1,0 +1,10 @@
+# NOTE: clangd only indexes CDB entries under the CDB's directory; forcing the
+# project CDB gets the out-of-tree PlatformIO HAL sources (HAL_Delay etc.)
+# indexed too. Arrays replace the global ones, so the global args are repeated.
+[language-server.clangd]
+args = [
+  "--background-index",
+  # "--compile-commands-dir=/Users/michael/git/Beetroot_EMB_4",
+  "--compile-commands-dir=.",
+  "--query-driver=/Users/michael/.platformio/packages/toolchain-*/bin/*-g++,/Users/michael/.platformio/packages/toolchain-*/bin/*-gcc",
+]
