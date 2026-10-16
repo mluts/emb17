@@ -8,3 +8,11 @@ args = [
   "--compile-commands-dir=.",
   "--query-driver=/Users/michael/.platformio/packages/toolchain-*/bin/*-g++,/Users/michael/.platformio/packages/toolchain-*/bin/*-gcc",
 ]
+
+[[language]]
+name = "cpp"
+roots = ["platformio.ini"]
+
+[[language]]
+name = "c"
+roots = ["platformio.ini"]
