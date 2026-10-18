@@ -8,7 +8,6 @@
 #include "oled/oled.h"
 #include "oled/oled_font.h"
 
-#define I2C_TIMEOUT_MS 100
 #define I2C_SPEED_HZ 100000U
 
 // NOTE: don't use in `if () RETURN_IF_NOT_OK;`
