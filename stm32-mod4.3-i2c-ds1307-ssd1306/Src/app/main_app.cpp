@@ -1,12 +1,9 @@
-#include "ds1307/ds1307.h"
 #include "main.h"
 #include "printf/usb_printf.h" // IWYU pragma: keep
 #include "stm32f4xx_hal.h"
 #include <cstring>
 #include <stdio.h>
 #include "i2c/i2c.h"
-#include "oled/oled.h"
-#include "oled/oled_font.h"
 
 #define I2C_SPEED_HZ 100000U
 

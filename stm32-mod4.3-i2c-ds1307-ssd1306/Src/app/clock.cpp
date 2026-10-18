@@ -39,6 +39,11 @@ public:
       return HAL_ERROR;
     }
 
+    if (dt == NULL) {
+      printf("[CLOCK] datetime is NULL\n");
+      return HAL_ERROR;
+    }
+
     memcpy(&datetime, dt, sizeof(datetime));
 
     status = OLED_Init(i2c, &oled_settings, &oled);
@@ -50,7 +55,7 @@ public:
 
     status = DS1307_Init(i2c, &rtc);
     if (status != HAL_OK) {
-      printf("[RTC] initialization failed (status=%d)\n", (int)status);
+      printf("[CLOCK] initialization failed (status=%d)\n", (int)status);
       release();
       return status;
     }
@@ -78,25 +83,47 @@ public:
   }
 
   HAL_StatusTypeDef clear() {
+    if (!oled) {
+      printf("[OLED] not initialized\n");
+      return HAL_ERROR;
+    }
+
     return OLED_Clear(oled);
   }
 
   HAL_StatusTypeDef drawHeader(const char *txt) {
+    if (!oled) {
+      printf("[OLED] not initialized\n");
+      return HAL_ERROR;
+    }
     return OLED_Print(oled, 0, 1, false, txt);
   }
 
   HAL_StatusTypeDef printDateTime() {
+    if (!oled) {
+      printf("[OLED] not initialized\n");
+      return HAL_ERROR;
+    }
+
+    if (!rtc) {
+      printf("[RTC] not initialized\n");
+      return HAL_ERROR;
+    }
+
     HAL_StatusTypeDef status = HAL_OK;
 
     status = DS1307_GetDateTime(rtc, &datetime);
-
-    if (status == HAL_OK) {
-      OLED_Printf(oled, 2, 1, "%04u-%02u-%02u", (unsigned)datetime.year,
-                  (unsigned)datetime.month, (unsigned)datetime.day);
-      OLED_Printf(oled, 4, 2, "%02u:%02u:%02u", (unsigned)datetime.hour,
-                  (unsigned)datetime.minute, (unsigned)datetime.second);
+    if (status != HAL_OK) {
+      return status;
     }
 
-    return status;
+    status = OLED_Printf(oled, 2, 1, "%04u-%02u-%02u", (unsigned)datetime.year,
+                         (unsigned)datetime.month, (unsigned)datetime.day);
+    if (status != HAL_OK) {
+      return status;
     }
+
+    return OLED_Printf(oled, 4, 2, "%02u:%02u:%02u", (unsigned)datetime.hour,
+                       (unsigned)datetime.minute, (unsigned)datetime.second);
+  }
 };
