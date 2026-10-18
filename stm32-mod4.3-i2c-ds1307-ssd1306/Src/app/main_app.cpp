@@ -7,6 +7,7 @@
 #include "i2c/i2c.h"
 
 #define I2C_SPEED_HZ 100000U
+#define DELAY_FOR_SERIAL_IFACE_MS 3000
 
 // NOTE: don't use in `if () RETURN_IF_NOT_OK;`
 #define RETURN_IF_NOT_OK(status, tag, msg)                                     \
@@ -20,7 +21,7 @@ static I2C_HandleTypeDef hi2c1;
 extern "C" void main_cpp(void) {
 
   // Wait for serial interface setup
-  HAL_Delay(5000);
+  HAL_Delay(DELAY_FOR_SERIAL_IFACE_MS);
 
   printf("Starting time display on SSD1306 using RTC module DS1307\n");
 
@@ -44,7 +45,6 @@ extern "C" void main_cpp(void) {
   RTCClock rtc_clock(&hi2c1);
   HAL_StatusTypeDef status;
 
-  // NOTE: save status first; RETURN_IF_NOT_OK evaluates its argument twice
   status = rtc_clock.init(&initial_datetime);
   RETURN_IF_NOT_OK(status, "CLOCK", "Initialization failed");
 
