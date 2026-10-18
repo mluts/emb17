@@ -3,6 +3,7 @@
 #include "stm32f4xx_hal.h"
 #include <cstring>
 #include <stdio.h>
+#include "app/clock.h"
 #include "i2c/i2c.h"
 
 #define I2C_SPEED_HZ 100000U
@@ -31,7 +32,34 @@ extern "C" void main_cpp(void) {
   RETURN_IF_NOT_OK(I2C_Scan(&hi2c1, found, sizeof(found), &found_count, 10),
                    "I2C", "Scan failed");
 
+  // NOTE: written to the DS1307 only when its oscillator is halted
+  const DS1307_DateTimeTypeDef initial_datetime = {.year = 2026,
+                                                   .month = 10,
+                                                   .day = 18,
+                                                   .weekday = 1,
+                                                   .hour = 13,
+                                                   .minute = 25,
+                                                   .second = 0};
+
+  RTCClock rtc_clock(&hi2c1);
+  HAL_StatusTypeDef status;
+
+  // NOTE: save status first; RETURN_IF_NOT_OK evaluates its argument twice
+  status = rtc_clock.init(&initial_datetime);
+  RETURN_IF_NOT_OK(status, "CLOCK", "Initialization failed");
+
+  status = rtc_clock.clear();
+  RETURN_IF_NOT_OK(status, "CLOCK", "Clear failed");
+
+  status = rtc_clock.drawHeader("DS1307 RTC");
+  RETURN_IF_NOT_OK(status, "CLOCK", "Draw header failed");
+
   while (1) {
+    status = rtc_clock.updateDateTime();
+    if (status != HAL_OK) {
+      printf("[CLOCK] update failed (status=%d)\r\n", (int)status);
+    }
+
     HAL_Delay(1000);
   }
 }
