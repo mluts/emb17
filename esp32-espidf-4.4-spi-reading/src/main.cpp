@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <string.h>
+
 #include "driver/spi_common.h"
 #include "freertos/FreeRTOS.h" // IWYU pragma: keep
 #include "freertos/task.h"
@@ -17,6 +19,11 @@
 // NOTE: STM32 slave re-arms HAL_SPI_TransmitReceive_IT per byte, so keep clock low
 #define SPI_CLOCK_HZ (100 * 1000)
 
+// NOTE: BME280 register map, emulated by the STM32 on SPI2
+#define BME280_REG_ID    0xD0
+#define BME280_READ      0x80 // bit 7 of the command byte selects read
+#define BME280_FRAME_MAX 32
+
 static spi_device_handle_t spi_dev;
 
 void spi_init() {
@@ -34,7 +41,6 @@ void spi_init() {
   dev_cfg.mode = 0; // CPOL=0, CPHA=0 - matches STM32 POLARITY_LOW / PHASE_1EDGE
   dev_cfg.clock_speed_hz = SPI_CLOCK_HZ;
   dev_cfg.spics_io_num = SPI_PIN_CS;
-  dev_cfg.cs_ena_pretrans = 2; // give STM32 EXTI on NSS time to reset its state
   dev_cfg.cs_ena_posttrans = 2;
   dev_cfg.queue_size = 1;
 
@@ -44,10 +50,43 @@ void spi_init() {
          SPI_PIN_SCLK, SPI_PIN_MOSI, SPI_PIN_MISO, SPI_PIN_CS, SPI_CLOCK_HZ);
 }
 
+// NOTE: command byte + (len) clock bytes; the first register value arrives
+// during the second byte, so the payload is rx[1..len]
+static esp_err_t bme280_read_regs(uint8_t reg, uint8_t *out, size_t len) {
+  if (out == nullptr || len == 0 || len + 1 > BME280_FRAME_MAX) {
+    return ESP_ERR_INVALID_ARG;
+  }
+
+  uint8_t tx[BME280_FRAME_MAX] = {};
+  uint8_t rx[BME280_FRAME_MAX] = {};
+  tx[0] = reg | BME280_READ;
+
+  spi_transaction_t t = {};
+  t.length = (len + 1) * 8;
+  t.tx_buffer = tx;
+  t.rx_buffer = rx;
+
+  esp_err_t err = spi_device_polling_transmit(spi_dev, &t);
+  if (err != ESP_OK) {
+    return err;
+  }
+
+  memcpy(out, rx + 1, len);
+  return ESP_OK;
+}
+
 extern "C" void app_main() {
   spi_init();
 
   while (1) {
-    vTaskDelay(20 / portTICK_PERIOD_MS);
+    uint8_t chip_id = 0;
+    esp_err_t err = bme280_read_regs(BME280_REG_ID, &chip_id, 1);
+    if (err == ESP_OK) {
+      printf("[BME280] chip id = 0x%02X\n", chip_id);
+    } else {
+      printf("[BME280] read failed: %s\n", esp_err_to_name(err));
+    }
+
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
   }
 }
