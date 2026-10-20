@@ -1,24 +1,18 @@
-#include "driver/spi_common.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include <stdio.h>
+#include "driver/spi_common.h"
+#include "freertos/FreeRTOS.h" // IWYU pragma: keep
+#include "freertos/task.h"
 
-#include "driver/gpio.h"
-#include "driver/gptimer.h"
-#include "driver/ledc.h"
-#include "esp_adc/adc_oneshot.h"
-#include "soc/adc_channel.h"
-// #include "esp_check.h"
-#include "esp_adc/adc_cali.h"
 #include "esp_err.h"
 #include "driver/spi_master.h"
+#include "soc/gpio_num.h"
 
 // NOTE: SPI2 on IOMUX
-#define SPI_HOST_ID SPI2_HOST
-#define SPI_PIN_MOSI GPIO_NUM_11
-#define SPI_PIN_SCLK GPIO_NUM_12
-#define SPI_PIN_MISO GPIO_NUM_13
-#define SPI_PIN_CS GPIO_NUM_10
+#define SPI_HOST_ID   SPI2_HOST
+#define SPI_PIN_MOSI  GPIO_NUM_11
+#define SPI_PIN_SCLK  GPIO_NUM_12
+#define SPI_PIN_MISO  GPIO_NUM_13
+#define SPI_PIN_CS    GPIO_NUM_10
 
 // NOTE: STM32 slave re-arms HAL_SPI_TransmitReceive_IT per byte, so keep clock low
 #define SPI_CLOCK_HZ (100 * 1000)
