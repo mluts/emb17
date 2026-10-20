@@ -12,14 +12,3 @@ CompileFlags:
     - -fno-stack-protector
     # - -specs=*
     - -fmacro-prefix-map=*
-
-Diagnostics:
-  UnusedIncludes: None
-  # Suppress:
-  #   - unknown_typename
-  #   - redefinition
-  #   - redefinition_different_typedef
-
-# Diagnostics:
-# 1. Unknown argument: '-fstrict-volatile-bitfields' [drv_unknown_argument]
-# 2. Unknown argument: '-fno-tree-switch-conversion' [drv_unknown_argument]
