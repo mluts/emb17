@@ -1,5 +1,6 @@
 #include "app.h"
 #include "main.h"
+#include "stm32f4xx_hal.h"
 #include <atomic>
 #include <cstdint>
 #include <stdio.h>
@@ -122,12 +123,15 @@ static void start_dma() {
 void app_setup(void) {
   DMA_Init();
   ADC_Init();
+
+  // Delay to connect to console
+  HAL_Delay(3000);
 }
 
 void app_loop(void) {
   start_dma();
 
   if (adc_data_ready.exchange(false)) {
-    printf("ADC PA5: %lu\n", static_cast<unsigned long>(adc_val));
+    printf("ADC PA1: %lu\n", static_cast<unsigned long>(adc_val));
   }
 }
