@@ -1,13 +1,29 @@
 #include "app.h"
 #include "main.h"
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_gpio.h"
 #include <atomic>
 #include <cstdint>
 #include <stdio.h>
 
+/*
+  ADC is on PA1
+
+  UART TX is on PA9
+*/
+
+// ADC handler
 ADC_HandleTypeDef hadc;
+// ADC DMA handler
 DMA_HandleTypeDef hdma;
+
+// UART handler
+UART_HandleTypeDef huart;
+// UART DMA handler
+DMA_HandleTypeDef hdma_uart_tx;
+
 static ADC_ChannelConfTypeDef sadc_channel_config = {0};
+static GPIO_InitTypeDef sgpio_init = {0};
 
 static uint32_t adc_val;
 static std::atomic<bool> adc_data_ready;
@@ -25,6 +41,59 @@ static void DMA_Init() {
   // UART RX -> Stream2/CH4 or Stream5/CH4
   HAL_NVIC_SetPriority(DMA2_Stream7_IRQn, 5, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream7_IRQn);
+}
+
+// Initialize UART Peripheral
+static void UART_Init() {
+  huart.Instance = USART1;
+  huart.Init.BaudRate = 115200;
+  huart.Init.WordLength = UART_WORDLENGTH_8B;
+  huart.Init.StopBits = UART_STOPBITS_1;
+  huart.Init.Parity = UART_PARITY_NONE;
+  huart.Init.Mode = UART_MODE_TX;
+  huart.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart.Init.OverSampling = UART_OVERSAMPLING_16;
+
+  if (HAL_UART_Init(&huart) != HAL_OK) {
+    Error_Handler();
+  }
+}
+
+// Called from HAL_UART_Init
+extern "C" void HAL_UART_MspInit(UART_HandleTypeDef *uartHandle) {
+
+  __HAL_RCC_USART1_CLK_ENABLE();
+
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+
+  // NOTE: PA9 = USART1_TX; no RX pin since huart.Init.Mode = UART_MODE_TX
+  sgpio_init.Pin = GPIO_PIN_9;
+  sgpio_init.Mode = GPIO_MODE_AF_PP;
+  sgpio_init.Pull = GPIO_NOPULL;
+  sgpio_init.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  sgpio_init.Alternate = GPIO_AF7_USART1;
+
+  HAL_GPIO_Init(GPIOA, &sgpio_init);
+
+  hdma_uart_tx.Instance = DMA2_Stream7;
+  hdma_uart_tx.Init.Channel = DMA_CHANNEL_4;
+  hdma_uart_tx.Init.Direction = DMA_MEMORY_TO_PERIPH;
+  hdma_uart_tx.Init.PeriphInc = DMA_PINC_DISABLE;
+  hdma_uart_tx.Init.MemInc = DMA_MINC_ENABLE;
+  hdma_uart_tx.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+  hdma_uart_tx.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+  hdma_uart_tx.Init.Mode = DMA_NORMAL;
+  hdma_uart_tx.Init.Priority = DMA_PRIORITY_LOW;
+  hdma_uart_tx.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+
+  if (HAL_DMA_Init(&hdma_uart_tx) != HAL_OK) {
+    Error_Handler();
+  }
+
+  __HAL_LINKDMA(uartHandle, hdmatx, hdma_uart_tx);
+
+  HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
+  HAL_NVIC_EnableIRQ(USART1_IRQn);
 }
 
 // ADC1 DR can only be read by DMA2
@@ -123,6 +192,7 @@ static void start_dma() {
 void app_setup(void) {
   DMA_Init();
   ADC_Init();
+  UART_Init();
 
   // Delay to connect to console
   HAL_Delay(3000);
