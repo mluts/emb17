@@ -14,14 +14,14 @@
   UART TX is on PA9
 */
 
-// ADC handler
+// ADC handle
 ADC_HandleTypeDef hadc;
-// ADC DMA handler
+// ADC DMA handle
 DMA_HandleTypeDef hdma;
 
-// UART handler
+// UART handle
 UART_HandleTypeDef huart;
-// UART DMA handler
+// UART DMA handle
 DMA_HandleTypeDef hdma_uart_tx;
 
 static ADC_ChannelConfTypeDef sadc_channel_config = {0};
@@ -97,8 +97,8 @@ extern "C" void HAL_UART_MspInit(UART_HandleTypeDef *uartHandle) {
 
   __HAL_LINKDMA(uartHandle, hdmatx, hdma_uart_tx);
 
-  HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(USART1_IRQn);
+  // HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
+  // HAL_NVIC_EnableIRQ(USART1_IRQn);
 }
 
 // ADC1 DR can only be read by DMA2
