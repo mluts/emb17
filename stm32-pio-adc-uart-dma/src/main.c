@@ -10,8 +10,12 @@ int main(void)
   SystemClock_Config();
   MX_GPIO_Init();
 
+  app_setup();
+
   while (1)
   {
+    app_loop();
+
     HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
     HAL_Delay(500);
   }
@@ -21,13 +25,6 @@ int main(void)
 void HAL_MspInit(void)
 {
   __HAL_RCC_SYSCFG_CLK_ENABLE();
-}
-
-/* NOTE: drives HAL_GetTick()/HAL_Delay(); any IRQ without a handler lands in the
-   startup file's Default_Handler infinite loop */
-void SysTick_Handler(void)
-{
-  HAL_IncTick();
 }
 
 /* NOTE: HSE 25 MHz /M=25 *N=192 /P=2 -> SYSCLK 96 MHz; /Q=4 -> 48 MHz for USB */

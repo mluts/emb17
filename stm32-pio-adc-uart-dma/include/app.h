@@ -5,8 +5,8 @@
 extern "C" {
 #endif
 
-void DMA_Init(void);
-void ADC_Init(void);
+void app_loop(void);
+void app_setup(void);
 
 #ifdef __cplusplus
 }
