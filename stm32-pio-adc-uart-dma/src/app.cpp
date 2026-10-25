@@ -4,6 +4,8 @@
 #include "stm32f4xx_hal_gpio.h"
 #include <atomic>
 #include <cstdint>
+#include <etl/string.h>
+#include <etl/to_string.h>
 #include <stdio.h>
 
 /*
@@ -28,6 +30,9 @@ static GPIO_InitTypeDef sgpio_init = {0};
 static uint32_t adc_val;
 static std::atomic<bool> adc_data_ready;
 static std::atomic<bool> adc_error;
+static etl::string<32> tx_str;
+static std::atomic<bool> uart_tx_done(true);
+static std::atomic<bool> uart_error;
 
 static void DMA_Init() {
   // Don't forget to enable clock
@@ -183,8 +188,28 @@ extern "C" void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc) {
   }
 }
 
+extern "C" void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance == USART1) {
+    uart_tx_done = true;
+  }
+}
+
+extern "C" void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+  if (huart->Instance == USART1) {
+    uart_error = true;
+  }
+}
+
 static void start_dma() {
   if (HAL_ADC_Start_DMA(&hadc, &adc_val, 1) != HAL_OK) {
+    Error_Handler();
+  }
+}
+
+static void send_uart(const etl::istring &str) {
+  if (HAL_UART_Transmit_DMA(&huart,
+                            reinterpret_cast<const uint8_t *>(str.data()),
+                            static_cast<uint16_t>(str.size())) != HAL_OK) {
     Error_Handler();
   }
 }
@@ -199,9 +224,30 @@ void app_setup(void) {
 }
 
 void app_loop(void) {
-  start_dma();
+  // NOTE: lock-step ADC -> UART -> ADC; the next sample starts only once the
+  // previous one has left the UART, so tx_str is never rewritten mid-transfer
+  if (uart_tx_done.exchange(false)) {
+    start_dma();
+  }
 
   if (adc_data_ready.exchange(false)) {
-    printf("ADC PA1: %lu\n", static_cast<unsigned long>(adc_val));
+    tx_str.clear();
+    tx_str += "ADC PA1: ";
+    // NOTE: append = true keeps the "ADC PA1: " prefix
+    etl::to_string(adc_val, tx_str, true);
+    tx_str += "\r\n";
+
+    printf("%s", tx_str.c_str());
+    send_uart(tx_str);
+  }
+
+  if (adc_error.exchange(false)) {
+    printf("ADC error\r\n");
+    uart_tx_done = true;
+  }
+
+  if (uart_error.exchange(false)) {
+    printf("UART error\r\n");
+    uart_tx_done = true;
   }
 }
