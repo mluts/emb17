@@ -1,5 +1,6 @@
 #include "main.h"
 #include "app.h"
+#include "usb_device.h"
 
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
@@ -9,6 +10,8 @@ int main(void)
   HAL_Init();
   SystemClock_Config();
   MX_GPIO_Init();
+  // NOTE: comment out to disable printf() over USB CDC
+  MX_USB_DEVICE_Init();
 
   app_setup();
 

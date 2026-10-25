@@ -57,6 +57,7 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma;
 extern ADC_HandleTypeDef hadc;
+extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
 // TODO: uncomment after UART with DMA is implemented
 // extern DMA_HandleTypeDef hdma_usart1_tx;
 // extern UART_HandleTypeDef huart1;
