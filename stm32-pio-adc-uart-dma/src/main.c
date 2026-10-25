@@ -1,40 +1,8 @@
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_adc.h"
-#include "stm32f4xx_hal_dma.h"
-// #include "stm32f4xx_hal_tim.h"
+#include "main.h"
+#include "app.h"
 
 static void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void Error_Handler(void);
-
-static ADC_HandleTypeDef adc_handle;
-static DMA_HandleTypeDef adc_dma_handle;
-static ADC_ChannelConfTypeDef sConfig = {0};
-
-void ADC_Init() {
- 
-  ADC_ChannelConfTypeDef sConfig = {0};
-
-  adc_handle.Instance =                   ADC1;
-  adc_handle.Init.ClockPrescaler =        ADC_CLOCK_SYNC_PCLK_DIV2;
-  adc_handle.Init.Resolution =            ADC_RESOLUTION_12B;
-
-  adc_handle.Init.ScanConvMode =          DISABLE;
-  adc_handle.Init.ContinuousConvMode =    DISABLE;
-  adc_handle.Init.DiscontinuousConvMode = DISABLE;
-
-  adc_handle.Init.ExternalTrigConvEdge =  ADC_EXTERNALTRIGCONVEDGE_NONE;
-  adc_handle.Init.ExternalTrigConv =      ADC_SOFTWARE_START;
-  adc_handle.Init.DataAlign =             ADC_DATAALIGN_RIGHT;
-  adc_handle.Init.NbrOfConversion =       1;
-  adc_handle.Init.DMAContinuousRequests = DISABLE;
-  adc_handle.Init.EOCSelection =          ADC_EOC_SINGLE_CONV;
-
-  if (HAL_ADC_Init(&adc_handle) != HAL_OK)
-  {
-    Error_Handler();
-  }
-}
 
 int main(void)
 {
@@ -115,7 +83,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 }
 
-static void Error_Handler(void)
+void Error_Handler(void)
 {
   __disable_irq();
   while (1)
