@@ -1,6 +1,0 @@
-/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug/CMakeFiles/mod-4-mini-proj-logger.dir
-/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug/CMakeFiles/edit_cache.dir
-/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug/CMakeFiles/rebuild_cache.dir
-/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug/cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir
-/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug/cmake/stm32cubemx/CMakeFiles/edit_cache.dir
-/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug/cmake/stm32cubemx/CMakeFiles/rebuild_cache.dir
