@@ -55,6 +55,12 @@
 },
 {
   "directory": "/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug",
+  "command": "\"/Users/michael/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc\" -DDEBUG -DSTM32F411xE -DUSE_HAL_DRIVER -I/Users/michael/git/emb17/mod-4-mini-proj-logger/cmake/stm32cubemx/../../Inc -I/Users/michael/git/emb17/mod-4-mini-proj-logger/cmake/stm32cubemx/../../Drivers/STM32F4xx_HAL_Driver/Inc -I/Users/michael/git/emb17/mod-4-mini-proj-logger/cmake/stm32cubemx/../../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I/Users/michael/git/emb17/mod-4-mini-proj-logger/cmake/stm32cubemx/../../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I/Users/michael/git/emb17/mod-4-mini-proj-logger/cmake/stm32cubemx/../../Drivers/CMSIS/Include  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -O0 -g3 -std=gnu11 -o CMakeFiles/mod-4-mini-proj-logger.dir/Src/app.c.obj -c /Users/michael/git/emb17/mod-4-mini-proj-logger/Src/app.c",
+  "file": "/Users/michael/git/emb17/mod-4-mini-proj-logger/Src/app.c",
+  "output": "/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug/CMakeFiles/mod-4-mini-proj-logger.dir/Src/app.c.obj"
+},
+{
+  "directory": "/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug",
   "command": "\"/Users/michael/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/14.3.1+st.2/bin/arm-none-eabi-gcc\" -DDEBUG -DSTM32F411xE -DUSE_HAL_DRIVER -I/Users/michael/git/emb17/mod-4-mini-proj-logger/cmake/stm32cubemx/../../Inc -I/Users/michael/git/emb17/mod-4-mini-proj-logger/cmake/stm32cubemx/../../Drivers/STM32F4xx_HAL_Driver/Inc -I/Users/michael/git/emb17/mod-4-mini-proj-logger/cmake/stm32cubemx/../../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I/Users/michael/git/emb17/mod-4-mini-proj-logger/cmake/stm32cubemx/../../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I/Users/michael/git/emb17/mod-4-mini-proj-logger/cmake/stm32cubemx/../../Drivers/CMSIS/Include  -mcpu=cortex-m4 -mfpu=fpv4-sp-d16 -mfloat-abi=hard  -Wall -fdata-sections -ffunction-sections -fstack-usage -O0 -g3 -std=gnu11 -o cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Src/system_stm32f4xx.c.obj -c /Users/michael/git/emb17/mod-4-mini-proj-logger/Src/system_stm32f4xx.c",
   "file": "/Users/michael/git/emb17/mod-4-mini-proj-logger/Src/system_stm32f4xx.c",
   "output": "/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug/cmake/stm32cubemx/CMakeFiles/STM32_Drivers.dir/__/__/Src/system_stm32f4xx.c.obj"

@@ -19,3 +19,4 @@ sdkconfig.*
 *.dblite
 
 */compile_commands.json
+/mod-4-mini-proj-logger/build/Debug
