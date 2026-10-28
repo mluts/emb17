@@ -1,0 +1,8 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug/cmake_install.cmake",
+		"/Users/michael/git/emb17/mod-4-mini-proj-logger/build/Debug/cmake/stm32cubemx/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
