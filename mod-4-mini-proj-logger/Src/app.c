@@ -48,7 +48,7 @@ typedef struct {
   ConsoleCommandFn f;
 } ConsoleCommandDef;
 
-void pong() { printf("pong\r\n"); }
+void pong() { printf("\r\npong\r\n"); }
 
 const ConsoleCommandDef console_commands[] = {{"ping", pong}};
 
@@ -74,6 +74,7 @@ void console_read_line() {
   static bool overflow;
 
   while (rb_get(&c)) {
+    printf("%s", &c);
     if (c == '\r' || c == '\n') {
       if (overflow) {
         printf("error: line too long\r\n");
@@ -106,8 +107,6 @@ void blink() {
 void app_main() {
   while (1) {
     blink();
-
-    // HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-    // HAL_Delay(500);
+    console_read_line();
   }
 }
