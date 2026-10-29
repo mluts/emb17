@@ -5,6 +5,9 @@
 extern "C" {
 #endif
 
+#include "stdint.h"
+
+void USB_CDC_console_receive(uint8_t *Buf, uint32_t *Len);
 void app_main(void);
 
 #ifdef __cplusplus

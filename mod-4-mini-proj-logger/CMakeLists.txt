@@ -46,6 +46,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Src/app.c
     Src/at24c32.c
+    Src/usb_printf.c
     # Add user sources here
 )
 
