@@ -20,7 +20,7 @@ static struct {
   volatile uint32_t tail; // consumer-only
 } console_rb;
 
-static bool rb_put(uint8_t c) {
+static bool console_rb_put(uint8_t c) {
   if (console_rb.head - console_rb.tail == CONSOLE_BUF_SIZE) { // full
     return false;
   }
@@ -31,7 +31,7 @@ static bool rb_put(uint8_t c) {
   return true;
 }
 
-static bool rb_get(uint8_t *c) {
+static bool console_rb_get(uint8_t *c) {
   if (console_rb.head == console_rb.tail) {
     return false;
   }
@@ -69,6 +69,7 @@ void i2c_scan() {
     printf("[I2C] Found device at 0x%02X\r\n", found[i]);
   }
 }
+
 void pong() { printf("\r\npong\r\n"); }
 
 const ConsoleCommandDef console_commands[] = {{"ping", pong},
@@ -76,7 +77,7 @@ const ConsoleCommandDef console_commands[] = {{"ping", pong},
 
 void USB_CDC_console_receive(uint8_t *Buf, uint32_t *Len) {
   for (int i = 0; i < *Len; i++) {
-    rb_put(Buf[i]);
+    console_rb_put(Buf[i]);
   }
 }
 
@@ -97,18 +98,19 @@ void console_read_line() {
   static uint32_t len;
   static bool overflow;
 
-  while (rb_get(&c)) {
-    printf("%s", &c);
+  while (console_rb_get(&c)) {
+
+    if (overflow) {
+      printf("error: line too long\r\n");
+    }
+
     if (c == '\r' || c == '\n') {
-      if (overflow) {
-        printf("error: line too long\r\n");
-      } else {
-        line[len] = '\0';
+      line[len] = '\0';
 
-        console_run_cmd(line);
+      console_run_cmd(line);
 
-        len = 0;
-      }
+      len = 0;
+      overflow = false;
     } else if (len < sizeof(line) - 1) {
       line[len++] = c;
     } else {
