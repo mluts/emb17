@@ -47,6 +47,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Src/app.c
     Src/at24c32.c
     Src/usb_printf.c
+    Src/i2c_ext.c
     # Add user sources here
 )
 
