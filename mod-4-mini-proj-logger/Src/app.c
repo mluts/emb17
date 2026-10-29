@@ -63,8 +63,10 @@ void console_run_cmd(char *line) {
        i++) {
     if (strcmp(line, console_commands[i].cmd) == 0) {
       console_commands[i].f();
+      return;
     }
   }
+  printf("\r\nUnknown command: %s\r\n", line);
 }
 
 void console_read_line() {
