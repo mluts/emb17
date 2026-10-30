@@ -93,6 +93,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
+  app_setup();
   app_main();
 
   /* USER CODE END 2 */
