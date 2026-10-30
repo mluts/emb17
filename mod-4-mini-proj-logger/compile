@@ -1,0 +1,3 @@
+#!/usr/bin/env fish
+cube cmake --build --preset Debug
+# and cube programmer -c port=SWD -w build/Debug/mod-4-mini-proj-logger.elf -v -rst

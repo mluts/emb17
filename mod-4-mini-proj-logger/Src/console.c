@@ -1,6 +1,7 @@
 #include "console.h"
 #include "stm32f4xx_hal.h"
 #include "usb_printf.h"
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
@@ -48,14 +49,20 @@ void USBD_CDC_console_receive(uint8_t *Buf, uint32_t *Len) {
 
 static void console_run_cmd(const char *line) {
   for (size_t i = 0; i < console_commands_len; i++) {
-    if (console_commands[i].cmd != NULL &&
-        strncmp(line, console_commands[i].cmd,
-                strlen(console_commands[i].cmd)) == 0) {
+    const char *cmd = console_commands[i].cmd;
+    const uint32_t cmd_len = strlen(cmd);
+
+    if (cmd != NULL && strncmp(line, cmd, strlen(cmd)) == 0 &&
+        (line[cmd_len] == '\0' || isspace(line[cmd_len]))) {
       console_commands[i].f(line);
+      printf("> ");
+      fflush(stdout);
       return;
     }
   }
   printf("\r\nUnknown command: \"%s\"\r\n", line);
+  printf("> ");
+  fflush(stdout);
 }
 
 ///

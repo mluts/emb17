@@ -49,6 +49,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Src/usb_printf.c
     Src/i2c_ext.c
     Src/console.c
+    Src/logger.c
     # Add user sources here
 )
 

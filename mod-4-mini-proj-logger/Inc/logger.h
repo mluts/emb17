@@ -21,7 +21,7 @@ extern "C" {
   (EEPROM_START_ADDR + (page % LOG_PAGE_COUNT) * EEPROM_PAGE_SIZE)
 
 #define TAIL_PAGE(head_page)                                                   \
-  (head_page >= LOG_PAGE_COUNT ? (head_page - 1 - LOG_PAGE_COUNT) : 0)
+  (head_page >= LOG_PAGE_COUNT ? (head_page - LOG_PAGE_COUNT) : 0)
 
 typedef uint16_t LogPage;
 
@@ -41,7 +41,7 @@ typedef struct {
 HAL_StatusTypeDef logger_init(LoggerHandleDef *logger,
                               AT24C32_HandleTypeDef *eeprom);
 HAL_StatusTypeDef logger_read(LoggerHandleDef *logger, LogPage, LogDef *log);
-HAL_StatusTypeDef logger_write(LoggerHandleDef *logger, LogDef *log);
+HAL_StatusTypeDef logger_write(LoggerHandleDef *logger, const char *msg);
 HAL_StatusTypeDef logger_log_tail_page(LoggerHandleDef *logger, LogPage *tail);
 
 #ifdef __cplusplus

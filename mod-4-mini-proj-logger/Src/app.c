@@ -1,12 +1,14 @@
 #include "at24c32.h"
 #include "i2c.h"
 #include "i2c_ext.h"
+#include "logger.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_def.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_i2c.h"
 #include "usb_printf.h"
 #include <console.h>
+#include <ctype.h>
 #include <stdatomic.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -15,6 +17,9 @@
 #define BLINK_PERIOD_MS 500
 #define PROMPT "> "
 #define AT24C32_A_PINS 0
+
+static LoggerHandleDef logger = {};
+static AT24C32_HandleTypeDef eeprom;
 
 // Shows found i2c devices
 void i2c_scan() {
@@ -38,9 +43,7 @@ void i2c_scan() {
 }
 
 // Simple fn for verifying that console works
-void pong(const char *s) {
-  printf("\r\npong\r\n");
-}
+void pong(const char *s) { printf("\r\npong\r\n"); }
 
 // Blink every BLINK_PERIOD_MS
 void blink() {
@@ -52,8 +55,6 @@ void blink() {
     last_blink = HAL_GetTick();
   }
 }
-
-static AT24C32_HandleTypeDef eeprom;
 
 const char *hal_err_to_str(HAL_StatusTypeDef err) {
   switch (err) {
@@ -94,11 +95,65 @@ void eeprom_is_ready() {
          hal_err_to_str(AT24C32_IsReady(&eeprom)));
 }
 
+void do_logger_init() {
+  HAL_StatusTypeDef status = 0;
+
+  printf("\r\nInitializing logger!\r\n");
+  status = logger_init(&logger, &eeprom);
+
+  if (status == HAL_OK) {
+    printf("\r\nLogger initialized!\r\n");
+  } else {
+    printf("\r\nLogger initialization error: %u\r\n", status);
+  }
+}
+
+void logger_log(const char *cmd) {
+  while (*cmd != '\0' && !isspace(*cmd)) {
+    cmd++;
+  }
+
+  while (*cmd != '\0' && isspace(*cmd)) {
+    cmd++;
+  }
+
+  if (logger_write(&logger, cmd) == HAL_OK) {
+    printf("\r\nSaved log: %s\r\n", cmd);
+  } else {
+    printf("\r\nlogger write failed!\r\n");
+    return;
+  }
+}
+
+void do_logger_read() {
+  LogPage tail = 0;
+  LogDef log = {0};
+
+  if (logger_log_tail_page(&logger, &tail) != HAL_OK) {
+    printf("\r\nlogger error\r\n");
+    return;
+  }
+
+  printf("\r\nLogs tail: %u\r\n", tail);
+  printf("Logs head page: %u\r\n", logger.head_page);
+
+  for (LogPage i = tail; i < logger.head_page; i++) {
+    logger_read(&logger, i, &log);
+    printf("(%u) %s\r\n", log.log_page, log.log);
+  }
+}
+
 void app_setup() {
   console_add_command("ping", pong);
   console_add_command("i2c-scan", i2c_scan);
   console_add_command("eeprom-init", eeprom_init);
   console_add_command("eeprom-is-ready", eeprom_is_ready);
+  console_add_command("logger-init", do_logger_init);
+  console_add_command("log", logger_log);
+  console_add_command("logs-read", do_logger_read);
+
+  eeprom_init();
+  do_logger_init();
 }
 
 void app_main() {
