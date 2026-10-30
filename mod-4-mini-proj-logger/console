@@ -1,2 +1,2 @@
 #!/bin/sh 
-tio /dev/cu.usbmodem3368367631321
+tio -e /dev/cu.usbmodem3368367631321

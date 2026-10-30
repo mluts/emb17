@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef void (*ConsoleCommandFn)(void);
 
@@ -14,7 +15,7 @@ typedef struct {
   ConsoleCommandFn f;
 } ConsoleCommandDef;
 
-void console_read_line();
+bool console_read_line();
 void console_add_command(const char *cmd, ConsoleCommandFn f);
 void USBD_CDC_console_receive(uint8_t *Buf, uint32_t *Len);
 

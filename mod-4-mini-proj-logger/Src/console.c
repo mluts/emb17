@@ -56,7 +56,12 @@ static void console_run_cmd(char *line) {
   printf("\r\nUnknown command: \"%s\"\r\n", line);
 }
 
-void console_read_line() {
+///
+/// @brief Read console line and run first matching command fn
+///
+/// @return Result of operation: true if newline, otherwise false
+///
+bool console_read_line() {
   static char line[CONSOLE_LINE_SIZE];
   static uint8_t c;
   static uint32_t len;
@@ -81,8 +86,20 @@ void console_read_line() {
       overflow = true;
     }
   }
+
+  if (len == 0) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
+///
+/// @brief Add new command to be run
+///
+/// @param cmd: string matched against console input
+/// @param f: function to be called when string matched against input
+///
 void console_add_command(const char *cmd, ConsoleCommandFn f) {
   console_commands[console_commands_len++] = (ConsoleCommandDef){cmd, f};
 }

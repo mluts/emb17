@@ -12,6 +12,7 @@
 #include <string.h>
 
 #define BLINK_PERIOD_MS 500
+#define PROMPT "> "
 
 // Shows found i2c devices
 void i2c_scan() {
@@ -54,6 +55,7 @@ void app_setup() {
 }
 
 void app_main() {
+
   while (1) {
     blink();
     console_read_line();
