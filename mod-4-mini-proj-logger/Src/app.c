@@ -38,7 +38,9 @@ void i2c_scan() {
 }
 
 // Simple fn for verifying that console works
-void pong() { printf("\r\npong\r\n"); }
+void pong(const char *s) {
+  printf("\r\npong\r\n");
+}
 
 // Blink every BLINK_PERIOD_MS
 void blink() {

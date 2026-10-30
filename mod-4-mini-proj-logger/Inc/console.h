@@ -5,10 +5,10 @@
 extern "C" {
 #endif
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
-typedef void (*ConsoleCommandFn)(void);
+typedef void (*ConsoleCommandFn)(const char *);
 
 typedef struct {
   const char *cmd;

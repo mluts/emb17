@@ -3,6 +3,7 @@
 #include "usb_printf.h"
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #define CONSOLE_BUF_SIZE 32
 #define CONSOLE_LINE_SIZE 64
@@ -45,11 +46,12 @@ void USBD_CDC_console_receive(uint8_t *Buf, uint32_t *Len) {
   }
 }
 
-static void console_run_cmd(char *line) {
-  for (size_t i = 0; i < sizeof(console_commands) / sizeof(console_commands[0]);
-       i++) {
-    if (strcmp(line, console_commands[i].cmd) == 0) {
-      console_commands[i].f();
+static void console_run_cmd(const char *line) {
+  for (size_t i = 0; i < console_commands_len; i++) {
+    if (console_commands[i].cmd != NULL &&
+        strncmp(line, console_commands[i].cmd,
+                strlen(console_commands[i].cmd)) == 0) {
+      console_commands[i].f(line);
       return;
     }
   }
