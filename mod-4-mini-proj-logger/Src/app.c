@@ -2,6 +2,7 @@
 #include "i2c.h"
 #include "i2c_ext.h"
 #include "stm32f4xx_hal.h"
+#include "stm32f4xx_hal_def.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_i2c.h"
 #include "usb_printf.h"
@@ -13,6 +14,7 @@
 
 #define BLINK_PERIOD_MS 500
 #define PROMPT "> "
+#define AT24C32_A_PINS 0
 
 // Shows found i2c devices
 void i2c_scan() {
@@ -49,9 +51,52 @@ void blink() {
   }
 }
 
+static AT24C32_HandleTypeDef eeprom;
+
+const char *hal_err_to_str(HAL_StatusTypeDef err) {
+  switch (err) {
+  case HAL_OK:
+    return "HAL_OK";
+    break;
+  case HAL_ERROR:
+    return "HAL_ERROR";
+    break;
+  case HAL_BUSY:
+    return "HAL_BUSY";
+    break;
+  case HAL_TIMEOUT:
+    return "HAL_TIMEOUT";
+    break;
+  default:
+    return "";
+  }
+}
+
+void eeprom_init() {
+  static HAL_StatusTypeDef status;
+
+  printf("\r\nInitializing EEPROM AT24C32(A%u)\r\n", AT24C32_A_PINS);
+
+  status = AT24C32_Init(&eeprom, &hi2c1, AT24C32_A_PINS);
+
+  if (status != HAL_OK) {
+    printf("\r\nEEPROM AT24C32(A%u) Init Error: %s\r\n", AT24C32_A_PINS,
+           hal_err_to_str(status));
+  }
+
+  printf("\r\nEEPROM AT24C32(A%u) Connected\r\n", AT24C32_A_PINS);
+}
+
+void eeprom_is_ready() {
+  printf("\r\nEEPROM AT24C32(A%u) readiness: %s\r\n", AT24C32_A_PINS,
+         hal_err_to_str(AT24C32_IsReady(&eeprom)));
+}
+
 void app_setup() {
   console_add_command("ping", pong);
   console_add_command("i2c-scan", i2c_scan);
+  console_add_command("eeprom-init", eeprom_init);
+  console_add_command("eeprom-is-ready", eeprom_is_ready);
 }
 
 void app_main() {
