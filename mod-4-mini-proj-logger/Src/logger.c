@@ -7,10 +7,11 @@
 #include "usbd_def.h"
 #include <stdint.h>
 
-// static LoggerHandleDef eeprom_rb;
+#define LOG_STATUS_MAGIC 0xABAD1DEA
 
 typedef struct {
   LogPage head_page;
+  uint32_t magic; // should be equal to LOG_STATUS_MAGIC
 } LogStatusDef;
 
 #ifndef MIN
@@ -22,18 +23,21 @@ typedef struct {
     return status;                                                             \
   }
 
-static HAL_StatusTypeDef save_rb_state(LoggerHandleDef *logger) {
+/// @brief Save logging state to EEPROM reserved page
+static HAL_StatusTypeDef save_logger_state(LoggerHandleDef *logger) {
   LogStatusDef log_status = {0};
 
   HAL_GUARD(logger->eeprom_is_ready);
 
   log_status.head_page = logger->head_page;
+  log_status.magic = LOG_STATUS_MAGIC;
 
   return AT24C32_Write(logger->eeprom, LOG_STATUS_PAGE_ADDR,
                        (uint8_t *)&log_status, sizeof(log_status));
 }
 
-static HAL_StatusTypeDef restore_rb_state(LoggerHandleDef *logger) {
+/// @brief Read logging state from EEPROM reserved page
+static HAL_StatusTypeDef restore_logger_state(LoggerHandleDef *logger) {
   LogStatusDef log_status = {0};
   HAL_StatusTypeDef status = 0;
 
@@ -44,14 +48,15 @@ static HAL_StatusTypeDef restore_rb_state(LoggerHandleDef *logger) {
 
   HAL_GUARD(status);
 
-  if (log_status.head_page < LOG_MAX_COUNT) {
+  if (log_status.magic == LOG_STATUS_MAGIC) {
     logger->head_page = log_status.head_page;
+  } else {
+    logger->head_page = 0;
   }
 
   return status;
 }
 
-/// @brief Initialize addresses from zero
 HAL_StatusTypeDef logger_init(LoggerHandleDef *logger,
                               AT24C32_HandleTypeDef *eeprom) {
 
@@ -60,12 +65,17 @@ HAL_StatusTypeDef logger_init(LoggerHandleDef *logger,
 
   HAL_GUARD(logger->eeprom_is_ready);
 
-  restore_rb_state(logger);
+  restore_logger_state(logger);
 
   return logger->eeprom_is_ready;
 }
 
-HAL_StatusTypeDef logger_read(LoggerHandleDef *logger, LogPage log_number,
+/// @brief read log page from logs
+/// @param logger: logger handle
+/// @param log_number: log page
+/// @param log: pointer which will contain log, extracted from memory
+/// @retval HAL Status of peripheral operation
+HAL_StatusTypeDef logger_read(const LoggerHandleDef *logger, LogPage log_number,
                               LogDef *log) {
   HAL_GUARD(logger->eeprom_is_ready);
 
@@ -73,30 +83,40 @@ HAL_StatusTypeDef logger_read(LoggerHandleDef *logger, LogPage log_number,
                       sizeof(LogDef));
 }
 
+/// @brief Add new log
+/// @param logger: logger handle
+/// @param msg: string to be appended as log
+/// @retval HAL Status of peripheral operation
 HAL_StatusTypeDef logger_write(LoggerHandleDef *logger, const char *msg) {
   HAL_GUARD(logger->eeprom_is_ready);
 
   static HAL_StatusTypeDef status;
   LogDef log = {
-      .log_page = logger->head_page,
+      .log_page = logger->head_page % LOG_MAX_COUNT,
   };
 
   strncpy((char *)log.log, msg, sizeof(log.log) - 2);
-  log.log[sizeof(log.log)-1] = '\0';
+  log.log[sizeof(log.log) - 1] = '\0';
 
   status = AT24C32_Write(logger->eeprom, LOG_PAGE_ADDR(logger->head_page),
                          (uint8_t *)&log, sizeof(LogDef));
 
   HAL_GUARD(status);
 
-  logger->head_page = (logger->head_page + 1) % LOG_MAX_COUNT;
+  logger->head_page++;
 
-  save_rb_state(logger);
+  save_logger_state(logger);
 
   return status;
 }
 
-HAL_StatusTypeDef logger_log_tail_page(LoggerHandleDef *logger, LogPage *tail) {
+/// @brief Return most early page. Logger data is stored in ring buffer with
+/// total EEPROM_PAGE_COUNT pages
+/// @param logger: logger handle
+/// @param tail: pointer to tail
+/// @retval HAL Status of peripheral operation
+HAL_StatusTypeDef logger_log_tail(const LoggerHandleDef *logger,
+                                  LogPage *tail) {
   HAL_GUARD(logger->eeprom_is_ready);
 
   *tail = TAIL_PAGE(logger->head_page);

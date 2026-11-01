@@ -109,11 +109,11 @@ void do_logger_init() {
 }
 
 void logger_log(const char *cmd) {
-  while (*cmd != '\0' && !isspace(*cmd)) {
+  while (*cmd != '\0' && !isspace((int)*cmd)) {
     cmd++;
   }
 
-  while (*cmd != '\0' && isspace(*cmd)) {
+  while (*cmd != '\0' && isspace((int)*cmd)) {
     cmd++;
   }
 
@@ -129,17 +129,17 @@ void do_logger_read() {
   LogPage tail = 0;
   LogDef log = {0};
 
-  if (logger_log_tail_page(&logger, &tail) != HAL_OK) {
+  if (logger_log_tail(&logger, &tail) != HAL_OK) {
     printf("\r\nlogger error\r\n");
     return;
   }
 
-  printf("\r\nLogs tail: %u\r\n", tail);
-  printf("Logs head page: %u\r\n", logger.head_page);
+  printf("\r\nLogs tail: %lu\r\n", tail);
+  printf("Logs head page: %lu\r\n", logger.head_page);
 
   for (LogPage i = tail; i < logger.head_page; i++) {
     logger_read(&logger, i, &log);
-    printf("(%u) %s\r\n", log.log_page, log.log);
+    printf("(%lu) %s\r\n", log.log_page, log.log);
   }
 }
 
