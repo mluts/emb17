@@ -139,7 +139,7 @@ void do_logger_read() {
 
   for (LogPage i = tail; i < logger.head_page; i++) {
     logger_read(&logger, i, &log);
-    printf("(%lu) %s\r\n", log.log_page, log.log);
+    printf("(%lu) %s\r\n", log.log_number, log.log);
   }
 }
 

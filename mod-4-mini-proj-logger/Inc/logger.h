@@ -34,7 +34,7 @@ typedef struct {
 } LoggerHandleDef;
 
 typedef struct {
-  LogPage log_page;
+  LogPage log_number;
   char log[EEPROM_PAGE_SIZE - sizeof(LogPage)];
 } LogDef;
 

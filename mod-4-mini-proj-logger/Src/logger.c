@@ -92,7 +92,7 @@ HAL_StatusTypeDef logger_write(LoggerHandleDef *logger, const char *msg) {
 
   static HAL_StatusTypeDef status;
   LogDef log = {
-      .log_page = logger->head_page % LOG_MAX_COUNT,
+      .log_number = logger->head_page % LOG_MAX_COUNT,
   };
 
   strncpy((char *)log.log, msg, sizeof(log.log) - 1);
