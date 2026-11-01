@@ -95,7 +95,7 @@ HAL_StatusTypeDef logger_write(LoggerHandleDef *logger, const char *msg) {
       .log_page = logger->head_page % LOG_MAX_COUNT,
   };
 
-  strncpy((char *)log.log, msg, sizeof(log.log) - 2);
+  strncpy((char *)log.log, msg, sizeof(log.log) - 1);
   log.log[sizeof(log.log) - 1] = '\0';
 
   status = AT24C32_Write(logger->eeprom, LOG_PAGE_ADDR(logger->head_page),
