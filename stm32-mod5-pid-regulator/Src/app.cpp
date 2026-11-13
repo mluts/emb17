@@ -5,10 +5,12 @@
 #include "etl/format_spec.h"
 #include "etl/string.h"
 #include "etl/to_string.h"
+#include "motor.hpp"
 #include "stm32f4xx_hal.h"
 #include "tim.h"
 #include <etl/atomic.h>
 #include <etl/string_view.h>
+#include <etl/to_arithmetic.h>
 
 namespace {
 constexpr uint32_t BLINK_PERIOD_MS = 500;
@@ -17,6 +19,7 @@ using Timers = etl::callback_timer_atomic<2, etl::atomic_uint32_t>;
 Timers timers;
 
 Encoder encoder;
+Motor motor;
 
 void blink() { HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); }
 
@@ -44,12 +47,25 @@ void enc(etl::string_view) {
 }
 
 void zero(etl::string_view) { encoder.zero(); }
+
+void motor_cmd(etl::string_view arg) {
+  auto value = etl::to_arithmetic<int>(arg);
+
+  if (!value.has_value()) {
+    printf("\r\nerror: not a number\r\n");
+    return;
+  }
+
+  motor.set(value.value());
+  printf("\r\nmotor %d\r\n", motor.command());
+}
 } // namespace
 
 extern "C" void app_setup(void) {
   console::add("ping", console::Handler::create<&pong>());
   console::add("enc", console::Handler::create<&enc>());
   console::add("zero", console::Handler::create<&zero>());
+  console::add("motor", console::Handler::create<&motor_cmd>());
 
   auto blink_id =
       timers.register_timer(Timers::callback_type::create<&blink>(),
@@ -59,6 +75,7 @@ extern "C" void app_setup(void) {
   timers.start(blink_id);
 
   encoder.init(&htim4);
+  motor.init(&htim1);
 }
 
 extern "C" void app_main(void) {
