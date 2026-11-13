@@ -5,9 +5,10 @@
 #include "etl/string.h"
 
 namespace {
-constexpr size_t RX_QUEUE_SIZE = 32;
+constexpr size_t RX_QUEUE_SIZE = 128;
 constexpr size_t LINE_SIZE = 64;
 constexpr size_t MAX_COMMANDS = 24;
+volatile bool rx_dropped = false;
 
 etl::queue_spsc_atomic<uint8_t, RX_QUEUE_SIZE> rx_queue;
 etl::flat_map<etl::string_view, console::Handler, MAX_COMMANDS> commands;
@@ -69,6 +70,7 @@ void console::read_line() {
       }
       line.clear();
       overflow = false;
+      rx_dropped = false;
     } else if (!line.full()) {
       line.push_back(static_cast<char>(c));
     } else {
@@ -79,6 +81,8 @@ void console::read_line() {
 
 extern "C" void USBD_CDC_console_receive(uint8_t *Buf, uint32_t *Len) {
   for (uint32_t i = 0; i < *Len; i++) {
-    rx_queue.push(Buf[i]);
+    if (!rx_queue.push(Buf[i])) {
+      rx_dropped = true;
+    }
   }
 }
