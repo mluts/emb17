@@ -4,7 +4,7 @@
 #include "etl/string_view.h"
 
 namespace console {
-// Handlers receive only the arg text, alredy stripped of the command word
+// Handlers receive only the arg text, already stripped of the command word
 
 using Handler = etl::delegate<void(etl::string_view)>;
 

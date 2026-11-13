@@ -15,6 +15,7 @@ etl::flat_map<etl::string_view, console::Handler, MAX_COMMANDS> commands;
 etl::string<LINE_SIZE> line;
 
 bool overflow = false;
+
 } // namespace
 
 void prompt() {
@@ -62,7 +63,7 @@ void console::read_line() {
 
   while (rx_queue.pop(c)) {
     if (c == '\r' || c == '\n') {
-      if (overflow) {
+      if (overflow || rx_dropped) {
         printf("\r\nerror: line too long\r\n");
         prompt();
       } else {
