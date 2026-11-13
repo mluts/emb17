@@ -1,0 +1,3 @@
+#!/usr/bin/env fish
+cube cmake --build --preset Debug
+and cube programmer -c port=SWD -w build/Debug/stm32-mod5-pid-regulator.elf -v -rst

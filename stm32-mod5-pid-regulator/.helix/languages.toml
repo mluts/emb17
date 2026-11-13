@@ -1,0 +1,8 @@
+# NOTE: generated from the installed STM32Cube bundles. The clangd path includes its
+# version, so run `cube-clangd-init --force` after an upgrade; that replaces this file.
+[language-server.clangd]
+command = "/Users/michael/Library/Application Support/stm32cube/bundles/st-arm-clangd/21.1.0+st.2/bin/starm-clangd"
+args = [
+  "--background-index",
+  "--query-driver=/Users/michael/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/*/bin/arm-none-eabi-gcc,/Users/michael/Library/Application Support/stm32cube/bundles/gnu-tools-for-stm32/*/bin/arm-none-eabi-g++",
+]

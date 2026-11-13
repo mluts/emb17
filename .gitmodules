@@ -1,0 +1,3 @@
+[submodule "stm32-mod5-pid-regulator/lib/etl"]
+	path = stm32-mod5-pid-regulator/lib/etl
+	url = https://github.com/ETLCPP/etl

@@ -1,0 +1,2 @@
+#!/bin/sh 
+tio -e /dev/cu.usbmodem3368367631321
