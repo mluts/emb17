@@ -8,6 +8,7 @@ void Encoder::init(TIM_HandleTypeDef *htim) {
 
 int32_t Encoder::read() {
   uint16_t cnt = static_cast<uint16_t>(__HAL_TIM_GET_COUNTER(tim_));
+  // *unsigned* (1 - 65535) becomes *signed* 2
   int16_t delta = static_cast<int16_t>(cnt - last_cnt_);
   last_cnt_ = cnt;
   position_ += delta;

@@ -16,28 +16,32 @@ namespace {
 constexpr uint32_t BLINK_PERIOD_MS = 500;
 
 using Timers = etl::callback_timer_atomic<2, etl::atomic_uint32_t>;
-Timers timers;
+Timers timers_controller;
 
 Encoder encoder;
 Motor motor;
 
+/// @brief Blinks LED on BlackPill board
 void blink() { HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13); }
 
+/// @brief Util to test that console works
 void pong(etl::string_view) { printf("\r\npong\r\n"); }
 
+/// @brief This enables `timers_controller`
 void tick_timers() {
   static uint32_t last = HAL_GetTick();
 
   uint32_t now = HAL_GetTick();
 
   if (now != last) {
-    timers.tick(now - last);
+    timers_controller.tick(now - last);
     last = now;
   }
 }
 
 void enc(etl::string_view) {
   int32_t counts = encoder.read();
+
   etl::string<16> deg;
 
   etl::to_string(encoder.degrees(), deg, etl::format_spec().precision(1));
@@ -67,12 +71,12 @@ extern "C" void app_setup(void) {
   console::add("zero", console::Handler::create<&zero>());
   console::add("motor", console::Handler::create<&motor_cmd>());
 
-  auto blink_id =
-      timers.register_timer(Timers::callback_type::create<&blink>(),
-                            BLINK_PERIOD_MS, etl::timer::mode::REPEATING);
+  auto blink_id = timers_controller.register_timer(
+      Timers::callback_type::create<&blink>(), BLINK_PERIOD_MS,
+      etl::timer::mode::REPEATING);
 
-  timers.enable(true);
-  timers.start(blink_id);
+  timers_controller.enable(true);
+  timers_controller.start(blink_id);
 
   encoder.init(&htim4);
   motor.init(&htim1);

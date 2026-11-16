@@ -1,7 +1,6 @@
 #pragma once
 
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_tim.h"
+#include "stm32f4xx_hal.h" // IWYU pragma: keep
 #include <cstdint>
 
 // DRV833 behind inverting PC817 optocouplers, slow-decay PWM
