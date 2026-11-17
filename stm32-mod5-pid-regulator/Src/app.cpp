@@ -192,12 +192,12 @@ void loop_cmd(etl::string_view arg) {
 
 void log_cmd(etl::string_view arg) {
   if (arg == etl::string_view("on")) {
-    printf("\r\nt_ms sp_deg pv_deg err_cnd out_pct\r\n");
+    // printf("\r\nt_ms sp_deg pv_deg err_cnt out_pct\r\n");
     timers_controller.start(log_id);
   } else if (arg == etl::string_view("off")) {
     timers_controller.stop(log_id);
   } else {
-    printf("\r\nerror: lop on|off\r\n");
+    printf("\r\nerror: log on|off\r\n");
     return;
   }
 }
@@ -229,6 +229,23 @@ extern "C" void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
   state.output = out;
 }
 
+void log_line() {
+  float sp = setpoint.degrees();
+  float out = state.output;
+  long err =
+      static_cast<long>(sp / Encoder::DEGREES_PER_COUNT) - encoder.position();
+  etl::string<16> sp_str, enc_deg_str, out_str;
+
+  auto spec = etl::format_spec().precision(1);
+
+  etl::to_string(sp, sp_str, spec);
+  etl::to_string(encoder.degrees(), enc_deg_str, spec);
+  etl::to_string(out, out_str, spec);
+
+  printf("%lu %s (sp) %s (enc) %ld (err) %s (out)\r\n", static_cast<unsigned long>(HAL_GetTick()),
+         sp_str.c_str(), enc_deg_str.c_str(), err, out_str.c_str());
+}
+
 extern "C" void app_setup(void) {
   console::add("ping", console::Handler::create<&pong>());
   console::add("enc", console::Handler::create<&enc>());
@@ -248,6 +265,10 @@ extern "C" void app_setup(void) {
 
   auto blink_id = timers_controller.register_timer(
       Timers::callback_type::create<&blink>(), BLINK_PERIOD_MS,
+      etl::timer::mode::REPEATING);
+
+  log_id = timers_controller.register_timer(
+      Timers::callback_type::create<&log_line>(), LOG_PERIOD_MS,
       etl::timer::mode::REPEATING);
 
   timers_controller.enable(true);
