@@ -13,6 +13,7 @@ class Motor {
 
 public:
   static constexpr int MAX_PERCENT = 100;
+  static constexpr int MIN_DUTY = 15;
 
   void init(TIM_HandleTypeDef *htim);
   void set(int percent);
