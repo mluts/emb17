@@ -1,0 +1,8 @@
+#!/usr/bin/env fish
+# Host-side build and run of tests/*.cpp against the HAL-free modules (pid).
+# Uses the system c++, not the ARM toolchain, so it runs without a board.
+set root (dirname (status filename))
+mkdir -p $root/build/host
+and c++ -std=c++17 -Wall -Wextra -I $root/Inc -I $root/lib/etl/include \
+    $root/tests/pid_test.cpp $root/Src/pid.cpp -o $root/build/host/pid_test
+and $root/build/host/pid_test
