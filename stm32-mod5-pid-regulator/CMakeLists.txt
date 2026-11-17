@@ -55,6 +55,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Src/motor.cpp
     Src/usb_printf.c
     Src/pid.cpp
+    Src/setpoint.cpp
     # Add user sources here
 )
 
