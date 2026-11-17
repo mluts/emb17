@@ -3,7 +3,7 @@
 
 void Setpoint::init(ADC_HandleTypeDef *hadc) {
   adc_ = hadc;
-  sample(); // seed conversion
+  sample();                                     // seed conversion
   filtered_deg_ = raw_ * MAX_DEGREES / ADC_MAX; // start unfiltered
 }
 
@@ -31,3 +31,7 @@ void Setpoint::set_override(float deg) {
 }
 
 void Setpoint::release() { override_ = false; }
+
+uint16_t Setpoint::raw() { return raw_; }
+
+float Setpoint::filtered() { return filtered_deg_; }

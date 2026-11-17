@@ -26,6 +26,7 @@ public:
   float ki() const { return ki_; }
   float kd() const { return kd_; }
   float deadband() const { return deadband_; }
+  float min_duty() const { return min_duty_; }
 
 private:
   float kp_, ki_, kd_, dt_;

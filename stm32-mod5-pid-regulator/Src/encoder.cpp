@@ -21,3 +21,5 @@ void Encoder::zero() {
 }
 
 float Encoder::degrees() const { return position_ * DEGREES_PER_COUNT; }
+
+int32_t Encoder::position() const { return position_; }

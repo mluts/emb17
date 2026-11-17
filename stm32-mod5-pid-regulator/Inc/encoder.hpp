@@ -15,6 +15,7 @@ public:
   int32_t read();
   void zero();
   float degrees() const;
+  int32_t position() const;
 
 private:
   TIM_HandleTypeDef *tim_ = nullptr;

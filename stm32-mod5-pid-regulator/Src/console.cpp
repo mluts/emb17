@@ -3,6 +3,7 @@
 #include "etl/flat_map.h"
 #include "etl/queue_spsc_atomic.h"
 #include "etl/string.h"
+#include <etl/string_view.h>
 
 namespace {
 constexpr size_t RX_QUEUE_SIZE = 128;
@@ -23,32 +24,53 @@ void prompt() {
   fflush(stdout);
 }
 
+/// @brief Match first whiltespace-separated part of `text` with `commands`, get
+/// and run `console::Handler`
 void run(etl::string_view text) {
   if (text.empty()) {
     prompt();
     return;
   }
 
+  // Find first space
   size_t space_pos = text.find(' ');
+
+  // Command name
   etl::string_view name = text.substr(0, space_pos);
+
+  // Command arg
   etl::string_view arg;
 
+  // If space was found (not EOL)
   if (space_pos != etl::string_view::npos) {
+    // Start substr from space
     arg = text.substr(space_pos);
 
+    // First non-space
     size_t first = arg.find_first_not_of(' ');
 
-    arg = (first == etl::string_view::npos) ? etl::string_view()
-                                            : arg.substr(first);
+    // If non-space was found
+    if (first != etl::string_view::npos) {
+      // Everything from non-space to EOL is `arg`
+      arg = arg.substr(first);
+    } else {
+      // `arg` is empty string
+      arg = etl::string_view();
+    }
   }
 
+  // iterator over pairs
   auto it = commands.find(name);
-  if (it == commands.end()) {
-    printf("\r\nUnknown command: \"%.*s\"\r\n", (int)name.size(), name.data());
-  } else {
+
+  // if found command
+  if (it != commands.end()) {
+    // Run cmd
     it->second(arg);
+  } else {
+    printf("\r\nUnknown command: \"%.*s\"\r\n", (int)name.size(), name.data());
   }
 
+  // Don't forget to show prompt
   prompt();
 }
 

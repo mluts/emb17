@@ -16,6 +16,9 @@ public:
   void set_override(float deg);
   void release();
 
+  uint16_t raw();
+  float filtered();
+
 private:
   ADC_HandleTypeDef *adc_ = nullptr;
   uint16_t raw_ = 0;
