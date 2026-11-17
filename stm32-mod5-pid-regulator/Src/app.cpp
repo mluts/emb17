@@ -18,13 +18,13 @@
 
 namespace {
 constexpr uint32_t BLINK_PERIOD_MS = 500;
-constexpr uint32_t LOG_PERIOD_MS = 100;
+constexpr uint32_t LOG_PERIOD_MS = 10;
 etl::timer::id::type log_id = etl::timer::id::NO_TIMER;
 
 constexpr float LOOP_DT = 0.01f;
-constexpr float KP_DEFAULT = 1.0f;
-constexpr float KI_DEFAULT = 0.0f;
-constexpr float KD_DEFAULT = 0.0f;
+constexpr float KP_DEFAULT = 30.0f;
+constexpr float KI_DEFAULT = 400.0f;
+constexpr float KD_DEFAULT = 1.5f;
 
 using Timers = etl::callback_timer_atomic<2, etl::atomic_uint32_t>;
 Timers timers_controller;
