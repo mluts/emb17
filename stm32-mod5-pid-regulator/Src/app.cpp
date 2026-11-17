@@ -18,6 +18,8 @@
 
 namespace {
 constexpr uint32_t BLINK_PERIOD_MS = 500;
+constexpr uint32_t LOG_PERIOD_MS = 100;
+etl::timer::id::type log_id = etl::timer::id::NO_TIMER;
 
 constexpr float LOOP_DT = 0.01f;
 constexpr float KP_DEFAULT = 1.0f;
@@ -107,6 +109,8 @@ void motor_cmd(etl::string_view arg) {
     return;
   }
 
+  state.loop_enabled = false;
+
   motor.set(value.value());
   printf("\r\nmotor %d\r\n", motor.command());
 }
@@ -156,6 +160,7 @@ void kd_cmd(etl::string_view arg) {
 void deadband_cmd(etl::string_view arg) {
   float v;
   if (parse_float(arg, v)) {
+    pid.reset();
     pid.set_deadband(v);
     print_gains();
   }
@@ -164,6 +169,7 @@ void deadband_cmd(etl::string_view arg) {
 void minduty_cmd(etl::string_view arg) {
   float v;
   if (parse_float(arg, v)) {
+    pid.reset();
     pid.set_min_duty(v);
     print_gains();
   }
@@ -178,6 +184,20 @@ void loop_cmd(etl::string_view arg) {
     motor.set(0);
   } else {
     printf("\r\nerror: loop on|off\r\n");
+    return;
+  }
+
+  printf("\r\nloop %s\r\n", state.loop_enabled ? "on" : "off");
+}
+
+void log_cmd(etl::string_view arg) {
+  if (arg == etl::string_view("on")) {
+    printf("\r\nt_ms sp_deg pv_deg err_cnd out_pct\r\n");
+    timers_controller.start(log_id);
+  } else if (arg == etl::string_view("off")) {
+    timers_controller.stop(log_id);
+  } else {
+    printf("\r\nerror: lop on|off\r\n");
     return;
   }
 }
@@ -224,6 +244,7 @@ extern "C" void app_setup(void) {
   console::add("deadband", console::Handler::create<&deadband_cmd>());
   console::add("minduty", console::Handler::create<&minduty_cmd>());
   console::add("loop", console::Handler::create<&loop_cmd>());
+  console::add("log", console::Handler::create<&log_cmd>());
 
   auto blink_id = timers_controller.register_timer(
       Timers::callback_type::create<&blink>(), BLINK_PERIOD_MS,
